@@ -1,0 +1,59 @@
+site_name: OS Learning Journey
+site_description: 系统性学习操作系统底层原理与设计哲学
+site_author: wanglh39
+repo_url: https://github.com/wanglh39/os
+repo_name: wanglh39/os
+
+theme:
+  name: material
+  language: zh
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Noto Sans SC
+    code: JetBrains Mono
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.mark
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - attr_list
+
+nav:
+  - 首页: index.md
+  - 设计哲学总论: 00-design-philosophy/README.md
+  - 启动与初始化: 01-boot-and-init/README.md
+  - 进程与调度: 02-process-scheduling/README.md
+  - 内存管理: 03-memory-management/README.md
+  - 虚拟内存: 04-virtual-memory/README.md
+  - 文件系统: 05-file-system/README.md
+  - I/O 与设备驱动: 06-io-device/README.md
+  - 系统调用: 07-syscall-kernel/README.md
+  - 并发与同步: 08-concurrency-sync/README.md

@@ -1,4 +1,4 @@
-# OS-Learning-Journey
+# OS Learning Journey
 
 系统性学习操作系统底层原理与设计哲学的教学项目。
 
@@ -43,8 +43,36 @@ os/
 5. **Real-world Analysis** — Linux 内核源码真实实现解读
 6. **Hands-on Lab** — 对应实验
 
+## 快速开始
+
+### 运行 Python 模拟器
+
+```bash
+python src/simulators/scheduler_sim.py      # 调度算法对比
+python src/simulators/page_table_sim.py     # 页表翻译
+python src/simulators/page_replacement_sim.py # 页面置换
+python src/simulators/buddy_visualizer.py   # Buddy System
+python src/simulators/io_scheduler_sim.py   # I/O 调度
+python src/simulators/vfs_sim.py            # VFS 层次结构
+python src/simulators/concurrency_sim.py    # 并发问题
+python src/simulators/syscall_sim.py        # 系统调用分发
+```
+
+### 编译运行 C 实现
+
+```bash
+gcc src/mini-kernel/buddy.c -o buddy && ./buddy
+gcc src/mini-kernel/context_switch.c -o context_switch && ./context_switch
+gcc src/mini-kernel/locks.c -o locks -lpthread && ./locks
+gcc src/mini-kernel/mini_fs.c -o mini_fs && ./mini_fs
+```
+
 ## 技术栈
 
 - **mini-kernel**: C 语言（与 Linux 源码一致，便于对照分析）
 - **simulators**: Python（快速实验与可视化）
 - **逆向分析**: Linux kernel source（主要参考 6.x 版本）
+
+## 文档站
+
+在线文档：[GitHub Pages](https://wanglh39.github.io/os/)
