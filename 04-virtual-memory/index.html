@@ -1,0 +1,2468 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="系统性学习操作系统底层原理与设计哲学">
+      
+      
+        <meta name="author" content="wanglh39">
+      
+      
+      
+        <link rel="prev" href="../03-memory-management/">
+      
+      
+        <link rel="next" href="../05-file-system/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>虚拟内存 - OS Learning Journey</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#04-" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="OS Learning Journey" class="md-header__button md-logo" aria-label="OS Learning Journey" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OS Learning Journey
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              虚拟内存
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/wanglh39/os" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wanglh39/os
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../00-design-philosophy/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  设计哲学总论
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../01-boot-and-init/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  启动与初始化
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../02-process-scheduling/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  进程与调度
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../03-memory-management/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  内存管理
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  虚拟内存
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../05-file-system/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  文件系统
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../06-io-device/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  I/O 与设备驱动
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../07-syscall-kernel/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  系统调用
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../08-concurrency-sync/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  并发与同步
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OS Learning Journey" class="md-nav__button md-logo" aria-label="OS Learning Journey" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    OS Learning Journey
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/wanglh39/os" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wanglh39/os
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-design-philosophy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    设计哲学总论
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-boot-and-init/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    启动与初始化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-process-scheduling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    进程与调度
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-memory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    内存管理
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    虚拟内存
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    虚拟内存
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        一、Design Philosophy：虚拟内存在解决什么问题？
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="一、Design Philosophy：虚拟内存在解决什么问题？">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 没有虚拟内存的世界
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 虚拟内存的三个核心承诺
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#historical-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        二、Historical Evolution：虚拟内存的演进
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="二、Historical Evolution：虚拟内存的演进">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-overlay-1960s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 覆盖（Overlay）—— 虚拟内存的前身（1960s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-1960s-atlas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 分页虚拟内存（1960s, Atlas 计算机）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-1980s-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 多级页表（1980s-）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-64" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 64位地址空间与五级页表
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-mechanism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        三、Core Mechanism：页表与地址翻译
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="三、Core Mechanism：页表与地址翻译">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-pte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 页表条目（PTE）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 地址翻译的完整流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-tlb-translation-lookaside-buffer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 TLB — Translation Lookaside Buffer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-page-fault" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 缺页异常（Page Fault）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-cow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 写时复制（COW）的详细流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        四、页面置换算法
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="四、页面置换算法">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 为什么需要页面置换？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 常见算法
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.2 常见算法">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fifo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FIFO（先进先出）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lru" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LRU（最近最少使用）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clock 算法（二次机会）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-clockactiveinactive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linux 的双指针 Clock（Active/Inactive 链表）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        五、Trade-offs：虚拟内存的关键权衡
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="五、Trade-offs：虚拟内存的关键权衡">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 页大小 vs 页表大小
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 按需分页 vs 预加载
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-swap-vs-oom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Swap vs OOM
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-analysislinux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        六、Real-world Analysis：Linux 虚拟内存源码
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="六、Real-world Analysis：Linux 虚拟内存源码">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-mm_struct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 mm_struct — 进程地址空间
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-vma" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 VMA — 虚拟内存区域
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-x86-64" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 x86-64 地址空间布局
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hands-on-lablab04-page-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        七、Hands-on Lab：lab04-page-table
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="七、Hands-on Lab：lab04-page-table">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验1：Python 页表翻译模拟器
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验2：Python 页面置换算法模拟
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        进阶实验
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考资源
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-file-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    文件系统
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-io-device/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    I/O 与设备驱动
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-syscall-kernel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    系统调用
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-concurrency-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    并发与同步
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        一、Design Philosophy：虚拟内存在解决什么问题？
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="一、Design Philosophy：虚拟内存在解决什么问题？">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 没有虚拟内存的世界
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 虚拟内存的三个核心承诺
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#historical-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        二、Historical Evolution：虚拟内存的演进
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="二、Historical Evolution：虚拟内存的演进">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-overlay-1960s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 覆盖（Overlay）—— 虚拟内存的前身（1960s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-1960s-atlas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 分页虚拟内存（1960s, Atlas 计算机）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-1980s-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 多级页表（1980s-）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-64" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 64位地址空间与五级页表
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-mechanism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        三、Core Mechanism：页表与地址翻译
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="三、Core Mechanism：页表与地址翻译">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-pte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 页表条目（PTE）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 地址翻译的完整流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-tlb-translation-lookaside-buffer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 TLB — Translation Lookaside Buffer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-page-fault" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 缺页异常（Page Fault）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-cow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 写时复制（COW）的详细流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        四、页面置换算法
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="四、页面置换算法">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 为什么需要页面置换？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 常见算法
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.2 常见算法">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fifo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FIFO（先进先出）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lru" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LRU（最近最少使用）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clock 算法（二次机会）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-clockactiveinactive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linux 的双指针 Clock（Active/Inactive 链表）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        五、Trade-offs：虚拟内存的关键权衡
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="五、Trade-offs：虚拟内存的关键权衡">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 页大小 vs 页表大小
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 按需分页 vs 预加载
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-swap-vs-oom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Swap vs OOM
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-analysislinux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        六、Real-world Analysis：Linux 虚拟内存源码
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="六、Real-world Analysis：Linux 虚拟内存源码">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-mm_struct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 mm_struct — 进程地址空间
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-vma" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 VMA — 虚拟内存区域
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-x86-64" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 x86-64 地址空间布局
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hands-on-lablab04-page-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        七、Hands-on Lab：lab04-page-table
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="七、Hands-on Lab：lab04-page-table">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验1：Python 页表翻译模拟器
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验2：Python 页面置换算法模拟
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        进阶实验
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考资源
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="04-">04 - 虚拟内存<a class="headerlink" href="#04-" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>"Virtual memory is one of the most elegant abstractions in computer science — it creates the illusion that each process has its own private, contiguous address space."</p>
+</blockquote>
+<hr />
+<h2 id="design-philosophy">一、Design Philosophy：虚拟内存在解决什么问题？<a class="headerlink" href="#design-philosophy" title="Permanent link">&para;</a></h2>
+<h3 id="11">1.1 没有虚拟内存的世界<a class="headerlink" href="#11" title="Permanent link">&para;</a></h3>
+<p>如果程序直接使用物理地址：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">// 程序 A 的代码</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="mh">0x10000</span><span class="p">;</span><span class="w">  </span><span class="c1">// 直接使用物理地址</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1">// 程序 B 的代码</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="mh">0x10000</span><span class="p">;</span><span class="w">  </span><span class="c1">// 也使用同一个物理地址！</span>
+</code></pre></div>
+<p>问题：
+1. <strong>地址冲突</strong>：两个程序使用了相同的地址，互相覆盖数据
+2. <strong>无法重定位</strong>：程序必须知道自己在物理内存中的位置
+3. <strong>无法扩展</strong>：程序大小受限于物理内存大小
+4. <strong>安全缺失</strong>：任何程序都可以读写任何物理地址</p>
+<h3 id="12">1.2 虚拟内存的三个核心承诺<a class="headerlink" href="#12" title="Permanent link">&para;</a></h3>
+<p>虚拟内存通过<strong>地址翻译</strong>机制，为每个进程提供三个承诺：</p>
+<ol>
+<li><strong>隔离</strong>：每个进程有独立的地址空间，互不干扰</li>
+<li><strong>连续</strong>：每个进程的地址空间从 0 开始，连续且完整</li>
+<li><strong>无限</strong>：虚拟地址空间远大于物理内存（通过交换/换页实现）</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>进程A的虚拟地址空间:        物理内存:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>┌─────────────┐            ┌─────────────┐
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│ 0x0000_0000 │ ──┐    ┌──→ │ Frame 5     │
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│   ...       │   │    │    │ Frame 6     │
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│ 0x4000_0000 │ ──┼────┼──→ │ Frame 12    │
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│   (code)    │   │    │    │ Frame 13    │
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│ 0x6000_0000 │ ──┘    │    │ ...         │
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│   (data)    │        │    │ Frame 100   │
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│ ...         │        ├──→ │ Frame 101   │
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│ 0x7fff_ffff │        │    │ ...         │
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>└─────────────┘        │    └─────────────┘
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>                       │
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>进程B的虚拟地址空间:        │
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>┌─────────────┐            │
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│ 0x0000_0000 │ ──────────→│ Frame 200
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│   ...       │            │ Frame 201
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>│ 0x4000_0000 │ ──────────→│ Frame 50
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│   (code)    │            │ ...
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│ 0x6000_0000 │ ──────────→│ Frame 80
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>│   (data)    │            │
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>│ ...         │            │
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>│ 0x7fff_ffff │            │
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>└─────────────┘
+</code></pre></div>
+<p><strong>设计哲学：间接层（indirection）——在地址访问和物理内存之间插入翻译层，用翻译层实现隔离、重定位和扩展。</strong></p>
+<p>David Wheeler 的名言："All problems in computer science can be solved by another level of indirection."</p>
+<hr />
+<h2 id="historical-evolution">二、Historical Evolution：虚拟内存的演进<a class="headerlink" href="#historical-evolution" title="Permanent link">&para;</a></h2>
+<h3 id="21-overlay-1960s">2.1 覆盖（Overlay）—— 虚拟内存的前身（1960s）<a class="headerlink" href="#21-overlay-1960s" title="Permanent link">&para;</a></h3>
+<p>在虚拟内存出现之前，程序大于物理内存时使用"覆盖"技术：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>程序总大小 64KB，物理内存只有 32KB：
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>┌──────────────┐
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>│ 常驻部分     │ 8KB  ← 始终在内存
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>├──────────────┤
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>│ Overlay A    │ 24KB ← 需要时加载，覆盖 Overlay B
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>│ Overlay B    │ 24KB ← 需要时加载，覆盖 Overlay A
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>└──────────────┘
+</code></pre></div>
+<p>程序员必须<strong>手动</strong>管理覆盖的加载和切换——极其痛苦且容易出错。</p>
+<h3 id="22-1960s-atlas">2.2 分页虚拟内存（1960s, Atlas 计算机）<a class="headerlink" href="#22-1960s-atlas" title="Permanent link">&para;</a></h3>
+<p>Manchester 大学的 Atlas 计算机首次实现了分页虚拟内存：</p>
+<ul>
+<li>把虚拟地址空间分成固定大小的<strong>页</strong></li>
+<li>把物理内存分成同样大小的<strong>页框</strong></li>
+<li>用<strong>页表</strong>记录虚拟页到物理页框的映射</li>
+<li>不在内存中的页存储在磁盘上，需要时加载（<strong>按需分页</strong>）</li>
+</ul>
+<p>这是计算机科学史上最重要的发明之一。</p>
+<h3 id="23-1980s-">2.3 多级页表（1980s-）<a class="headerlink" href="#23-1980s-" title="Permanent link">&para;</a></h3>
+<p>32位地址空间需要 4MB 的页表（1M 页 × 4字节/条目）。如果每个进程都有 4MB 页表，100 个进程就是 400MB——不可接受。</p>
+<p>多级页表的解决方案：<strong>只保存实际使用的地址范围的页表项。</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>32位地址，2级页表：
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>- 页目录（1K条目 × 4字节 = 4KB）
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>- 页表（1K条目 × 4字节 = 4KB）
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>如果进程只用了 8MB 地址空间（2个页目录项）：
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>- 1个页目录（4KB）+ 2个页表（8KB）= 12KB
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>- 而不是 4MB！
+</code></pre></div>
+<h3 id="24-64">2.4 64位地址空间与五级页表<a class="headerlink" href="#24-64" title="Permanent link">&para;</a></h3>
+<p>x86-64 使用 48 位虚拟地址（256TB 地址空间），需要四级页表：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>48位地址: [9位 PML4][9位 PDP][9位 PD][9位 PT][12位 Offset]
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>         ↓           ↓        ↓       ↓       ↓
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>         4级         3级      2级     1级     页内偏移
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>         (PGD)       (PUD)    (PMD)   (PTE)
+</code></pre></div>
+<p>Linux 5.x 引入了五级页表（57位地址空间，128PB）：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>57位地址: [9位 PML5][9位 PML4][9位 PDP][9位 PD][9位 PT][12位 Offset]
+</code></pre></div>
+<p><strong>为什么每级 9 位？</strong> 因为每级页表占 1 页（4KB），每个条目 8 字节（64位），4KB / 8B = 512 = 2^9 条目。</p>
+<hr />
+<h2 id="core-mechanism">三、Core Mechanism：页表与地址翻译<a class="headerlink" href="#core-mechanism" title="Permanent link">&para;</a></h2>
+<h3 id="31-pte">3.1 页表条目（PTE）<a class="headerlink" href="#31-pte" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">// x86-64 的 PTE 格式（64位）</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1">// Bit 63: NX (No Execute)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1">// Bit 62-52: Available for OS</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1">// Bit 51-12: Physical Frame Number (40 bits → 1TB physical addressable)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1">// Bit 11-9: Available for OS</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1">// Bit 8: G (Global TLB)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1">// Bit 7: PAT (Page Attribute Table)</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1">// Bit 6: D (Dirty - written to)</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="c1">// Bit 5: A (Accessed - read or written)</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1">// Bit 4: PCD (Page-level Cache Disable)</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1">// Bit 3: PWT (Page-level Write-Through)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="c1">// Bit 2: U/S (User/Supervisor)</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="c1">// Bit 1: R/W (Read/Write)</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="c1">// Bit 0: P (Present)</span>
+</code></pre></div>
+<p>关键标志位：</p>
+<table>
+<thead>
+<tr>
+<th>标志</th>
+<th>含义</th>
+<th>为什么需要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P (Present)</td>
+<td>页是否在物理内存中</td>
+<td>不在则触发缺页异常</td>
+</tr>
+<tr>
+<td>R/W</td>
+<td>读/写权限</td>
+<td>写保护（COW、只读代码段）</td>
+</tr>
+<tr>
+<td>U/S</td>
+<td>用户/内核权限</td>
+<td>隔离内核地址空间</td>
+</tr>
+<tr>
+<td>A (Accessed)</td>
+<td>是否被访问过</td>
+<td>页面置换算法使用</td>
+</tr>
+<tr>
+<td>D (Dirty)</td>
+<td>是否被写入</td>
+<td>决定换出时是否需要写回磁盘</td>
+</tr>
+<tr>
+<td>NX</td>
+<td>不可执行</td>
+<td>防止代码注入攻击</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32">3.2 地址翻译的完整流程<a class="headerlink" href="#32" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>CPU 发出虚拟地址 0x00007F8A_B123_4567
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>                    │
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>                    ▼
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>┌─────────────────────────────────────────────┐
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>│ 1. CR3 寄存器 → 当前进程的 PML4 表物理地址   │
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>│                                              │
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>│ 2. 从虚拟地址提取 PML4 索引 (bits 47-39)     │
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>│    → 查 PML4 表 → PDP 表物理地址             │
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>│                                              │
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>│ 3. 从虚拟地址提取 PDP 索引 (bits 38-30)      │
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>│    → 查 PDP 表 → PD 表物理地址               │
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>│                                              │
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>│ 4. 从虚拟地址提取 PD 索引 (bits 29-21)       │
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>│    → 查 PD 表 → PT 表物理地址                │
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>│                                              │
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>│ 5. 从虚拟地址提取 PT 索引 (bits 20-12)       │
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>│    → 查 PT 表 → 物理页框地址                 │
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>│                                              │
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>│ 6. 物理页框地址 + 页内偏移 (bits 11-0)       │
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>│    → 最终物理地址                            │
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>└─────────────────────────────────────────────┘
+</code></pre></div>
+<p>每次地址翻译需要 4 次内存访问（4 级页表）——如果没有缓存，性能灾难。</p>
+<h3 id="33-tlb-translation-lookaside-buffer">3.3 TLB — Translation Lookaside Buffer<a class="headerlink" href="#33-tlb-translation-lookaside-buffer" title="Permanent link">&para;</a></h3>
+<p>TLB 是 CPU 内部的硬件缓存，缓存最近使用的页表条目：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>TLB 命中：
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  虚拟地址 → TLB 查找 → 直接得到物理地址（1 cycle）
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>TLB 未命中：
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>  虚拟地址 → 走 4 级页表（4 次内存访问） → 物理地址
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>  → 同时更新 TLB
+</code></pre></div>
+<p>TLB 的容量很小（通常 64-1024 条目），但命中率很高（&gt;99%），因为程序有<strong>局部性</strong>——访问的地址往往集中在少数几个页。</p>
+<p><strong>TLB 刷新的代价</strong>：</p>
+<p>切换进程时需要刷新 TLB（因为新进程有不同的页表），这会导致切换后的大量 TLB miss。</p>
+<p><strong>优化1：PCID（Process Context Identifier）</strong>——在 TLB 条目中标记进程 ID，切换进程时不刷新属于其他进程的 TLB 条目。</p>
+<p><strong>优化2：全局页（Global Page）</strong>——内核地址空间在所有进程间共享，标记为 Global 的 TLB 条目在进程切换时不刷新。</p>
+<h3 id="34-page-fault">3.4 缺页异常（Page Fault）<a class="headerlink" href="#34-page-fault" title="Permanent link">&para;</a></h3>
+<p>当 PTE 的 P 位为 0（页不在物理内存中），CPU 触发缺页异常：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">// arch/x86/mm/fault.c（简化）</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kt">void</span><span class="w"> </span><span class="nf">do_page_fault</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">pt_regs</span><span class="w"> </span><span class="o">*</span><span class="n">regs</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">error_code</span><span class="p">)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="p">{</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read_cr2</span><span class="p">();</span><span class="w">  </span><span class="c1">// 获取导致缺页的虚拟地址</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="c1">// 判断缺页类型</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">error_code</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">PF_USER</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">        </span><span class="c1">// 用户态缺页</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">        </span><span class="n">handle_user_mode_fault</span><span class="p">(</span><span class="n">address</span><span class="p">,</span><span class="w"> </span><span class="n">error_code</span><span class="p">);</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">        </span><span class="c1">// 内核态缺页</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">        </span><span class="n">handle_kernel_mode_fault</span><span class="p">(</span><span class="n">address</span><span class="p">,</span><span class="w"> </span><span class="n">error_code</span><span class="p">);</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="p">}</span>
+</code></pre></div>
+<p>缺页的四种情况：</p>
+<table>
+<thead>
+<tr>
+<th>情况</th>
+<th>P 位</th>
+<th>原因</th>
+<th>处理方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>页不在内存</td>
+<td>0</td>
+<td>页被换出到磁盘</td>
+<td>从磁盘加载到内存，更新 PTE</td>
+</tr>
+<tr>
+<td>首次访问</td>
+<td>0</td>
+<td>页从未被分配</td>
+<td>分配新物理页（零初始化）</td>
+</tr>
+<tr>
+<td>COW 页</td>
+<td>1, R/W=0</td>
+<td>写只读页（COW）</td>
+<td>分配新页，复制内容，更新 PTE</td>
+</tr>
+<tr>
+<td>权限违反</td>
+<td>1</td>
+<td>用户态访问内核页</td>
+<td>发送 SIGSEGV</td>
+</tr>
+</tbody>
+</table>
+<h3 id="35-cow">3.5 写时复制（COW）的详细流程<a class="headerlink" href="#35-cow" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>1. fork() 时：
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>   父进程的页都标记为只读（R/W=0）
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>   子进程共享父进程的页（PTE 指向同一物理页框）
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>2. 父进程或子进程写入某页：
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>   → 触发缺页异常（写只读页）
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>   → 内核检查：这是 COW 页吗？
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>   → 是：分配新物理页，复制内容，修改 PTE 为可写
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>   → 不是：发送 SIGSEGV
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>3. 结果：
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>   只有被写入的页才被复制
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>   只读的页继续共享
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">// mm/memory.c（简化）</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">static</span><span class="w"> </span><span class="n">vm_fault_t</span><span class="w"> </span><span class="nf">handle_pte_fault</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">vm_fault</span><span class="w"> </span><span class="o">*</span><span class="n">vmf</span><span class="p">)</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="p">{</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="n">pte_t</span><span class="w"> </span><span class="n">entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">vmf</span><span class="o">-&gt;</span><span class="n">pte</span><span class="p">;</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">pte_present</span><span class="p">(</span><span class="n">entry</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">        </span><span class="c1">// 页不在内存</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pte_none</span><span class="p">(</span><span class="n">entry</span><span class="p">))</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">do_anonymous_page</span><span class="p">(</span><span class="n">vmf</span><span class="p">);</span><span class="w">  </span><span class="c1">// 首次访问</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="w">        </span><span class="k">else</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">do_swap_page</span><span class="p">(</span><span class="n">vmf</span><span class="p">);</span><span class="w">       </span><span class="c1">// 从磁盘换入</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">vmf</span><span class="o">-&gt;</span><span class="n">flags</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">FAULT_FLAG_WRITE</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">pte_write</span><span class="p">(</span><span class="n">entry</span><span class="p">))</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">do_wp_page</span><span class="p">(</span><span class="n">vmf</span><span class="p">);</span><span class="w">         </span><span class="c1">// COW 处理</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="w">        </span><span class="c1">// ...</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a><span class="p">}</span>
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>
+<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a><span class="k">static</span><span class="w"> </span><span class="n">vm_fault_t</span><span class="w"> </span><span class="nf">do_wp_page</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">vm_fault</span><span class="w"> </span><span class="o">*</span><span class="n">vmf</span><span class="p">)</span>
+<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="p">{</span>
+<a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">page</span><span class="w"> </span><span class="o">*</span><span class="n">old_page</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vmf</span><span class="o">-&gt;</span><span class="n">page</span><span class="p">;</span>
+<a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a>
+<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a><span class="w">    </span><span class="c1">// 如果只有一个引用，直接改为可写</span>
+<a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">page_count</span><span class="p">(</span><span class="n">old_page</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a><span class="w">        </span><span class="n">wp_page_reuse</span><span class="p">(</span><span class="n">vmf</span><span class="p">);</span>
+<a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a>
+<a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a><span class="w">    </span><span class="c1">// 多个引用（被共享），需要复制</span>
+<a id="__codelineno-11-34" name="__codelineno-11-34" href="#__codelineno-11-34"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">page</span><span class="w"> </span><span class="o">*</span><span class="n">new_page</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">alloc_page</span><span class="p">(</span><span class="n">GFP_HIGHUSER</span><span class="p">);</span>
+<a id="__codelineno-11-35" name="__codelineno-11-35" href="#__codelineno-11-35"></a><span class="w">    </span><span class="n">copy_user_highpage</span><span class="p">(</span><span class="n">new_page</span><span class="p">,</span><span class="w"> </span><span class="n">old_page</span><span class="p">,</span><span class="w"> </span><span class="n">vmf</span><span class="o">-&gt;</span><span class="n">address</span><span class="p">,</span><span class="w"> </span><span class="n">vmf</span><span class="o">-&gt;</span><span class="n">vma</span><span class="p">);</span>
+<a id="__codelineno-11-36" name="__codelineno-11-36" href="#__codelineno-11-36"></a>
+<a id="__codelineno-11-37" name="__codelineno-11-37" href="#__codelineno-11-37"></a><span class="w">    </span><span class="c1">// 更新 PTE 指向新页，标记可写</span>
+<a id="__codelineno-11-38" name="__codelineno-11-38" href="#__codelineno-11-38"></a><span class="w">    </span><span class="n">pte_t</span><span class="w"> </span><span class="n">entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mk_pte</span><span class="p">(</span><span class="n">new_page</span><span class="p">,</span><span class="w"> </span><span class="n">vmf</span><span class="o">-&gt;</span><span class="n">vma</span><span class="o">-&gt;</span><span class="n">vm_page_prot</span><span class="p">);</span>
+<a id="__codelineno-11-39" name="__codelineno-11-39" href="#__codelineno-11-39"></a><span class="w">    </span><span class="n">entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pte_mkdirty</span><span class="p">(</span><span class="n">entry</span><span class="p">);</span>
+<a id="__codelineno-11-40" name="__codelineno-11-40" href="#__codelineno-11-40"></a><span class="w">    </span><span class="n">entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pte_mkwrite</span><span class="p">(</span><span class="n">entry</span><span class="p">);</span>
+<a id="__codelineno-11-41" name="__codelineno-11-41" href="#__codelineno-11-41"></a><span class="w">    </span><span class="n">set_pte_at</span><span class="p">(</span><span class="n">vmf</span><span class="o">-&gt;</span><span class="n">vma</span><span class="o">-&gt;</span><span class="n">vm_mm</span><span class="p">,</span><span class="w"> </span><span class="n">vmf</span><span class="o">-&gt;</span><span class="n">address</span><span class="p">,</span><span class="w"> </span><span class="n">vmf</span><span class="o">-&gt;</span><span class="n">pte</span><span class="p">,</span><span class="w"> </span><span class="n">entry</span><span class="p">);</span>
+<a id="__codelineno-11-42" name="__codelineno-11-42" href="#__codelineno-11-42"></a>
+<a id="__codelineno-11-43" name="__codelineno-11-43" href="#__codelineno-11-43"></a><span class="w">    </span><span class="c1">// 减少旧页的引用计数</span>
+<a id="__codelineno-11-44" name="__codelineno-11-44" href="#__codelineno-11-44"></a><span class="w">    </span><span class="n">put_page</span><span class="p">(</span><span class="n">old_page</span><span class="p">);</span>
+<a id="__codelineno-11-45" name="__codelineno-11-45" href="#__codelineno-11-45"></a>
+<a id="__codelineno-11-46" name="__codelineno-11-46" href="#__codelineno-11-46"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-11-47" name="__codelineno-11-47" href="#__codelineno-11-47"></a><span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="_1">四、页面置换算法<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<h3 id="41">4.1 为什么需要页面置换？<a class="headerlink" href="#41" title="Permanent link">&para;</a></h3>
+<p>物理内存有限，但虚拟地址空间远大于物理内存。当物理内存满了，需要把一些页换出到磁盘，腾出空间给新页。</p>
+<p><strong>核心问题：选择哪个页换出？</strong></p>
+<p>理想：换出"最长时间不会被访问"的页（Belady 最优算法，但无法实现——无法预知未来）。</p>
+<h3 id="42">4.2 常见算法<a class="headerlink" href="#42" title="Permanent link">&para;</a></h3>
+<h4 id="fifo">FIFO（先进先出）<a class="headerlink" href="#fifo" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>物理内存（3页框）：
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>访问序列: 7, 0, 1, 2, 0, 3, 0, 4
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>Step 1: [7]          miss
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>Step 2: [7,0]        miss
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>Step 3: [7,0,1]      miss
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>Step 4: [0,1,2]      miss (换出7)
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>Step 5: [0,1,2]      hit
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>Step 6: [1,2,3]      miss (换出0)
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>Step 7: [2,3,0]      miss (换出1)
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>Step 8: [3,0,4]      miss (换出2)
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>命中率: 1/8 = 12.5%
+</code></pre></div>
+<p>问题：FIFO 可能换出频繁使用的页。而且 FIFO 存在 <strong>Belady 异常</strong>——增加页框数反而降低命中率！</p>
+<h4 id="lru">LRU（最近最少使用）<a class="headerlink" href="#lru" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>访问序列: 7, 0, 1, 2, 0, 3, 0, 4
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>Step 1: [7]          miss
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>Step 2: [7,0]        miss
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>Step 3: [7,0,1]      miss
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>Step 4: [0,1,2]      miss (换出7，最久未用)
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>Step 5: [1,2,0]      hit  (0移到最新)
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>Step 6: [2,0,3]      miss (换出1)
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>Step 7: [2,3,0]      hit  (0移到最新)
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>Step 8: [3,0,4]      miss (换出2)
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>命中率: 2/8 = 25%
+</code></pre></div>
+<p>LRU 是理论上的好算法，但<strong>精确实现 LRU 代价很高</strong>——需要每次访问都更新顺序，硬件支持有限。</p>
+<h4 id="clock">Clock 算法（二次机会）<a class="headerlink" href="#clock" title="Permanent link">&para;</a></h4>
+<p>Linux 实际使用的近似 LRU 算法。利用 PTE 的 A（Accessed）位：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>所有页组织成环形链表，有一个"指针"指向当前位置：
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>     ┌──→ [Page A: A=0] → [Page B: A=1] → [Page C: A=0] → [Page D: A=1] ──┐
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>     └──────────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>需要换出页时：
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>1. 指针指向 Page A，A=0 → 换出 Page A
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>2. 如果 A=1 → 清零 A，指针前进（给"第二次机会"）
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>3. 重复直到找到 A=0 的页
+</code></pre></div>
+<p><strong>设计哲学：用硬件提供的 A 位近似 LRU——不需要精确的访问顺序，只需要区分"最近访问过"和"最近没访问过"。</strong></p>
+<h4 id="linux-clockactiveinactive">Linux 的双指针 Clock（Active/Inactive 链表）<a class="headerlink" href="#linux-clockactiveinactive" title="Permanent link">&para;</a></h4>
+<p>Linux 进一步改进，使用两个链表：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>Active 链表（最近活跃的页）: [Page A] → [Page B] → [Page C]
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>Inactive 链表（最近不活跃的页）: [Page D] → [Page E] → [Page F]
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>新页 → 加入 Inactive 链表头部
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>Inactive 中的页被再次访问 → 提升到 Active 链表
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>Active 链表中的页长期不被访问 → 降级到 Inactive 链表
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>换出时 → 从 Inactive 链表尾部选择
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1">// mm/vmscan.c（简化）</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">lruvec</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">list_head</span><span class="w"> </span><span class="n">lists</span><span class="p">[</span><span class="n">NR_LRU_LISTS</span><span class="p">];</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="p">};</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="k">enum</span><span class="w"> </span><span class="n">lru_list</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">    </span><span class="n">LRU_INACTIVE_ANON</span><span class="p">,</span><span class="w">    </span><span class="c1">// 不活跃匿名页</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">    </span><span class="n">LRU_ACTIVE_ANON</span><span class="p">,</span><span class="w">      </span><span class="c1">// 活跃匿名页</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">    </span><span class="n">LRU_INACTIVE_FILE</span><span class="p">,</span><span class="w">    </span><span class="c1">// 不活跃文件页</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">    </span><span class="n">LRU_ACTIVE_FILE</span><span class="p">,</span><span class="w">      </span><span class="c1">// 活跃文件页</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">    </span><span class="n">LRU_UNEVICTABLE</span><span class="p">,</span><span class="w">      </span><span class="c1">// 不可换出</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="p">};</span>
+</code></pre></div>
+<p><strong>为什么区分匿名页和文件页？</strong> 因为文件页可以直接从磁盘重新加载（丢弃即可），而匿名页必须写入 swap 才能换出（代价更大）。所以优先换出文件页。</p>
+<hr />
+<h2 id="trade-offs">五、Trade-offs：虚拟内存的关键权衡<a class="headerlink" href="#trade-offs" title="Permanent link">&para;</a></h2>
+<h3 id="51-vs">5.1 页大小 vs 页表大小<a class="headerlink" href="#51-vs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>页大小</th>
+<th>页表大小（48位地址）</th>
+<th>TLB 覆盖范围</th>
+<th>内部碎片</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4KB</td>
+<td>512GB / 4KB × 8B = 1GB</td>
+<td>512 × 4KB = 2MB</td>
+<td>小</td>
+</tr>
+<tr>
+<td>2MB</td>
+<td>512GB / 2MB × 8B = 2MB</td>
+<td>512 × 2MB = 1GB</td>
+<td>中</td>
+</tr>
+<tr>
+<td>1GB</td>
+<td>512GB / 1GB × 8B = 4KB</td>
+<td>512 × 1GB = 512GB</td>
+<td>大</td>
+</tr>
+</tbody>
+</table>
+<p><strong>权衡</strong>：大页减少页表大小和 TLB miss，但增加内部碎片和分配难度。</p>
+<h3 id="52-vs">5.2 按需分页 vs 预加载<a class="headerlink" href="#52-vs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>按需分页（Demand Paging）</td>
+<td>只加载实际使用的页、启动快</td>
+<td>频繁缺页中断、运行中延迟</td>
+</tr>
+<tr>
+<td>预加载（Prefetch）</td>
+<td>减少运行中缺页</td>
+<td>可能加载不需要的页、浪费内存</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Linux 的选择</strong>：按需分页为主 + readahead 预读（文件页）。</p>
+<h3 id="53-swap-vs-oom">5.3 Swap vs OOM<a class="headerlink" href="#53-swap-vs-oom" title="Permanent link">&para;</a></h3>
+<p>当物理内存耗尽：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Swap（换出到磁盘）</td>
+<td>给进程更多时间、避免杀进程</td>
+<td>磁盘 I/O 慢、系统可能 thrashing</td>
+</tr>
+<tr>
+<td>OOM Killer（杀进程）</td>
+<td>立即释放内存、避免 thrashing</td>
+<td>杀掉用户进程、数据丢失</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Linux 的选择</strong>：先 Swap，Swap 不够时 OOM Killer。OOM Killer 的选择策略基于进程的"坏度"（oom_score）——内存占用大、优先级低的进程优先被杀。</p>
+<hr />
+<h2 id="real-world-analysislinux">六、Real-world Analysis：Linux 虚拟内存源码<a class="headerlink" href="#real-world-analysislinux" title="Permanent link">&para;</a></h2>
+<h3 id="61-mm_struct">6.1 mm_struct — 进程地址空间<a class="headerlink" href="#61-mm_struct" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1">// include/linux/mm_types.h</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">mm_struct</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">        </span><span class="k">struct</span><span class="w"> </span><span class="nc">maple_tree</span><span class="w"> </span><span class="n">mm_mt</span><span class="p">;</span><span class="w">     </span><span class="c1">// Maple tree（新内核，替代红黑树）</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">        </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">mmap_base</span><span class="p">;</span><span class="w">     </span><span class="c1">// mmap 区域基址</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">        </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">mmap_legacy_base</span><span class="p">;</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">        </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">task_size</span><span class="p">;</span><span class="w">     </span><span class="c1">// 进程地址空间大小</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">        </span><span class="n">pgd_t</span><span class="w"> </span><span class="o">*</span><span class="n">pgd</span><span class="p">;</span><span class="w">                  </span><span class="c1">// 页全局目录（顶级页表）</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">        </span><span class="n">atomic_t</span><span class="w"> </span><span class="n">mm_users</span><span class="p">;</span><span class="w">           </span><span class="c1">// 用户计数（线程共享时增加）</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="w">        </span><span class="n">atomic_t</span><span class="w"> </span><span class="n">mm_count</span><span class="p">;</span><span class="w">           </span><span class="c1">// 引用计数</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">map_count</span><span class="p">;</span><span class="w">               </span><span class="c1">// VMA 数量</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="w">        </span><span class="n">spinlock_t</span><span class="w"> </span><span class="n">arg_lock</span><span class="p">;</span>
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="w">        </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">start_code</span><span class="p">,</span><span class="w"> </span><span class="n">end_code</span><span class="p">;</span><span class="w">   </span><span class="c1">// 代码段</span>
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a><span class="w">        </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">start_data</span><span class="p">,</span><span class="w"> </span><span class="n">end_data</span><span class="p">;</span><span class="w">   </span><span class="c1">// 数据段</span>
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="w">        </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">start_brk</span><span class="p">,</span><span class="w"> </span><span class="n">brk</span><span class="p">;</span><span class="w">         </span><span class="c1">// 堆</span>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="w">        </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">start_stack</span><span class="p">;</span><span class="w">            </span><span class="c1">// 栈</span>
+<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a><span class="w">        </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">arg_start</span><span class="p">,</span><span class="w"> </span><span class="n">arg_end</span><span class="p">;</span><span class="w">     </span><span class="c1">// 命令行参数</span>
+<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a><span class="w">        </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">env_start</span><span class="p">,</span><span class="w"> </span><span class="n">env_end</span><span class="p">;</span><span class="w">     </span><span class="c1">// 环境变量</span>
+<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a><span class="w">    </span><span class="p">};</span>
+<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a>
+<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a><span class="p">};</span>
+</code></pre></div>
+<h3 id="62-vma">6.2 VMA — 虚拟内存区域<a class="headerlink" href="#62-vma" title="Permanent link">&para;</a></h3>
+<p>每个连续的虚拟地址范围对应一个 VMA（Virtual Memory Area）：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">vm_area_struct</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">vm_start</span><span class="p">;</span><span class="w">          </span><span class="c1">// 起始虚拟地址</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">vm_end</span><span class="p">;</span><span class="w">            </span><span class="c1">// 结束虚拟地址</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">vm_flags</span><span class="p">;</span><span class="w">          </span><span class="c1">// 属性（VM_READ, VM_WRITE, VM_EXEC, VM_SHARED）</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">rb_node</span><span class="w"> </span><span class="n">vm_rb</span><span class="p">;</span><span class="w">            </span><span class="c1">// 红黑树节点（按地址排序）</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">mm_struct</span><span class="w"> </span><span class="o">*</span><span class="n">vm_mm</span><span class="p">;</span><span class="w">         </span><span class="c1">// 所属地址空间</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="n">vm_file</span><span class="p">;</span><span class="w">            </span><span class="c1">// 映射的文件（如果有）</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">vm_pgoff</span><span class="p">;</span><span class="w">          </span><span class="c1">// 文件内偏移（以页为单位）</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">vm_operations_struct</span><span class="w"> </span><span class="o">*</span><span class="n">vm_ops</span><span class="p">;</span><span class="w"> </span><span class="c1">// 操作函数表</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="p">};</span>
+</code></pre></div>
+<p>VMA 的组织（新内核用 Maple Tree 替代红黑树）：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>进程的虚拟地址空间（通过 VMA 描述）：
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>0x0000_0000 ──────────────────────────────
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>              │ (未使用)                  │
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>0x4000_0000 ──┤ VMA: code (r-x)           │
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>              │ VMA: data (rw-)           │
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>0x6000_0000 ──┤ VMA: heap (rw-, grow up)  │ ← brk
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>              │ (未使用)                  │
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>0x7f00_0000 ──┤ VMA: mmap (rw-)           │ ← mmap 区域
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>              │ VMA: stack (rw-, grow down)│
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>0x7fff_ffff ──┴───────────────────────────
+</code></pre></div>
+<h3 id="63-x86-64">6.3 x86-64 地址空间布局<a class="headerlink" href="#63-x86-64" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>0x0000_0000_0000_0000 ────────────────────────────────────
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>                        │ User Space                     │
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>                        │ (47位地址空间, 256TB)           │
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>0x0000_7fff_ffff_ffff ──┴────────────────────────────────
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>                        │ Non-canonical (hole)            │
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>0xffff_8000_0000_0000 ────────────────────────────────────
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>                        │ Kernel Space                    │
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>                        │ - Direct mapping (物理内存直接映射)│
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>                        │ - vmalloc/ioremap               │
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>                        │ - Kernel text/data              │
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>0xffff_ffff_ffff_ffff ──┴────────────────────────────────
+</code></pre></div>
+<p><strong>关键设计</strong>：内核地址空间在所有进程间共享——切换进程时不需要切换内核部分的页表。只有用户空间的页表是每个进程独立的。</p>
+<hr />
+<h2 id="hands-on-lablab04-page-table">七、Hands-on Lab：lab04-page-table<a class="headerlink" href="#hands-on-lablab04-page-table" title="Permanent link">&para;</a></h2>
+<h3 id="1python">实验1：Python 页表翻译模拟器<a class="headerlink" href="#1python" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># src/simulators/page_table_sim.py</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">PageTableEntry</span><span class="p">:</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span> <span class="o">=</span> <span class="kc">None</span>       <span class="c1"># 物理页框号</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">present</span> <span class="o">=</span> <span class="kc">False</span>    <span class="c1"># 是否在内存中</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">readable</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">writable</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">executable</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">accessed</span> <span class="o">=</span> <span class="kc">False</span>   <span class="c1"># A 位</span>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">dirty</span> <span class="o">=</span> <span class="kc">False</span>      <span class="c1"># D 位</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="k">class</span><span class="w"> </span><span class="nc">MultiLevelPageTable</span><span class="p">:</span>
+<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a><span class="w">    </span><span class="sd">"""模拟 x86-64 四级页表"""</span>
+<a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">bits_per_level</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">page_offset_bits</span><span class="o">=</span><span class="mi">12</span><span class="p">):</span>
+<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">levels</span> <span class="o">=</span> <span class="n">levels</span>
+<a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">bits_per_level</span> <span class="o">=</span> <span class="n">bits_per_level</span>
+<a id="__codelineno-21-19" name="__codelineno-21-19" href="#__codelineno-21-19"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">page_offset_bits</span> <span class="o">=</span> <span class="n">page_offset_bits</span>
+<a id="__codelineno-21-20" name="__codelineno-21-20" href="#__codelineno-21-20"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># 嵌套字典模拟多级页表</span>
+<a id="__codelineno-21-21" name="__codelineno-21-21" href="#__codelineno-21-21"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">physical_memory</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># frame_num -&gt; data</span>
+<a id="__codelineno-21-22" name="__codelineno-21-22" href="#__codelineno-21-22"></a>
+<a id="__codelineno-21-23" name="__codelineno-21-23" href="#__codelineno-21-23"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vaddr</span><span class="p">):</span>
+<a id="__codelineno-21-24" name="__codelineno-21-24" href="#__codelineno-21-24"></a><span class="w">        </span><span class="sd">"""从虚拟地址提取各级索引"""</span>
+<a id="__codelineno-21-25" name="__codelineno-21-25" href="#__codelineno-21-25"></a>        <span class="n">offset</span> <span class="o">=</span> <span class="n">vaddr</span> <span class="o">&amp;</span> <span class="p">((</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_offset_bits</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-21-26" name="__codelineno-21-26" href="#__codelineno-21-26"></a>        <span class="n">vaddr</span> <span class="o">&gt;&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_offset_bits</span>
+<a id="__codelineno-21-27" name="__codelineno-21-27" href="#__codelineno-21-27"></a>        <span class="n">indices</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-21-28" name="__codelineno-21-28" href="#__codelineno-21-28"></a>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">levels</span><span class="p">):</span>
+<a id="__codelineno-21-29" name="__codelineno-21-29" href="#__codelineno-21-29"></a>            <span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vaddr</span> <span class="o">&amp;</span> <span class="p">((</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">bits_per_level</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+<a id="__codelineno-21-30" name="__codelineno-21-30" href="#__codelineno-21-30"></a>            <span class="n">vaddr</span> <span class="o">&gt;&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bits_per_level</span>
+<a id="__codelineno-21-31" name="__codelineno-21-31" href="#__codelineno-21-31"></a>        <span class="n">indices</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>  <span class="c1"># 从最高级到最低级</span>
+<a id="__codelineno-21-32" name="__codelineno-21-32" href="#__codelineno-21-32"></a>        <span class="k">return</span> <span class="n">indices</span><span class="p">,</span> <span class="n">offset</span>
+<a id="__codelineno-21-33" name="__codelineno-21-33" href="#__codelineno-21-33"></a>
+<a id="__codelineno-21-34" name="__codelineno-21-34" href="#__codelineno-21-34"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vaddr</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<a id="__codelineno-21-35" name="__codelineno-21-35" href="#__codelineno-21-35"></a><span class="w">        </span><span class="sd">"""建立虚拟地址到物理页框的映射"""</span>
+<a id="__codelineno-21-36" name="__codelineno-21-36" href="#__codelineno-21-36"></a>        <span class="n">indices</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_indices</span><span class="p">(</span><span class="n">vaddr</span><span class="p">)</span>
+<a id="__codelineno-21-37" name="__codelineno-21-37" href="#__codelineno-21-37"></a>        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span>
+<a id="__codelineno-21-38" name="__codelineno-21-38" href="#__codelineno-21-38"></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">levels</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+<a id="__codelineno-21-39" name="__codelineno-21-39" href="#__codelineno-21-39"></a>            <span class="k">if</span> <span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+<a id="__codelineno-21-40" name="__codelineno-21-40" href="#__codelineno-21-40"></a>                <span class="n">node</span><span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-21-41" name="__codelineno-21-41" href="#__codelineno-21-41"></a>            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+<a id="__codelineno-21-42" name="__codelineno-21-42" href="#__codelineno-21-42"></a>
+<a id="__codelineno-21-43" name="__codelineno-21-43" href="#__codelineno-21-43"></a>        <span class="n">entry</span> <span class="o">=</span> <span class="n">PageTableEntry</span><span class="p">()</span>
+<a id="__codelineno-21-44" name="__codelineno-21-44" href="#__codelineno-21-44"></a>        <span class="n">entry</span><span class="o">.</span><span class="n">frame</span> <span class="o">=</span> <span class="n">frame</span>
+<a id="__codelineno-21-45" name="__codelineno-21-45" href="#__codelineno-21-45"></a>        <span class="n">entry</span><span class="o">.</span><span class="n">present</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-21-46" name="__codelineno-21-46" href="#__codelineno-21-46"></a>        <span class="k">if</span> <span class="n">flags</span><span class="p">:</span>
+<a id="__codelineno-21-47" name="__codelineno-21-47" href="#__codelineno-21-47"></a>            <span class="n">entry</span><span class="o">.</span><span class="n">readable</span> <span class="o">=</span> <span class="n">flags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'readable'</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-21-48" name="__codelineno-21-48" href="#__codelineno-21-48"></a>            <span class="n">entry</span><span class="o">.</span><span class="n">writable</span> <span class="o">=</span> <span class="n">flags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'writable'</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-21-49" name="__codelineno-21-49" href="#__codelineno-21-49"></a>            <span class="n">entry</span><span class="o">.</span><span class="n">executable</span> <span class="o">=</span> <span class="n">flags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'executable'</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-21-50" name="__codelineno-21-50" href="#__codelineno-21-50"></a>        <span class="n">node</span><span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">entry</span>
+<a id="__codelineno-21-51" name="__codelineno-21-51" href="#__codelineno-21-51"></a>
+<a id="__codelineno-21-52" name="__codelineno-21-52" href="#__codelineno-21-52"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">translate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vaddr</span><span class="p">,</span> <span class="n">access_type</span><span class="o">=</span><span class="s1">'read'</span><span class="p">):</span>
+<a id="__codelineno-21-53" name="__codelineno-21-53" href="#__codelineno-21-53"></a><span class="w">        </span><span class="sd">"""翻译虚拟地址到物理地址"""</span>
+<a id="__codelineno-21-54" name="__codelineno-21-54" href="#__codelineno-21-54"></a>        <span class="n">indices</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_indices</span><span class="p">(</span><span class="n">vaddr</span><span class="p">)</span>
+<a id="__codelineno-21-55" name="__codelineno-21-55" href="#__codelineno-21-55"></a>
+<a id="__codelineno-21-56" name="__codelineno-21-56" href="#__codelineno-21-56"></a>        <span class="c1"># 走多级页表</span>
+<a id="__codelineno-21-57" name="__codelineno-21-57" href="#__codelineno-21-57"></a>        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span>
+<a id="__codelineno-21-58" name="__codelineno-21-58" href="#__codelineno-21-58"></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">levels</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+<a id="__codelineno-21-59" name="__codelineno-21-59" href="#__codelineno-21-59"></a>            <span class="k">if</span> <span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+<a id="__codelineno-21-60" name="__codelineno-21-60" href="#__codelineno-21-60"></a>                <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"Page table not found (level </span><span class="si">{}</span><span class="s2">)"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<a id="__codelineno-21-61" name="__codelineno-21-61" href="#__codelineno-21-61"></a>            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+<a id="__codelineno-21-62" name="__codelineno-21-62" href="#__codelineno-21-62"></a>
+<a id="__codelineno-21-63" name="__codelineno-21-63" href="#__codelineno-21-63"></a>        <span class="k">if</span> <span class="n">indices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+<a id="__codelineno-21-64" name="__codelineno-21-64" href="#__codelineno-21-64"></a>            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"PTE not found"</span>
+<a id="__codelineno-21-65" name="__codelineno-21-65" href="#__codelineno-21-65"></a>
+<a id="__codelineno-21-66" name="__codelineno-21-66" href="#__codelineno-21-66"></a>        <span class="n">entry</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+<a id="__codelineno-21-67" name="__codelineno-21-67" href="#__codelineno-21-67"></a>
+<a id="__codelineno-21-68" name="__codelineno-21-68" href="#__codelineno-21-68"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">present</span><span class="p">:</span>
+<a id="__codelineno-21-69" name="__codelineno-21-69" href="#__codelineno-21-69"></a>            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"Page not present (Page Fault!)"</span>
+<a id="__codelineno-21-70" name="__codelineno-21-70" href="#__codelineno-21-70"></a>
+<a id="__codelineno-21-71" name="__codelineno-21-71" href="#__codelineno-21-71"></a>        <span class="c1"># 权限检查</span>
+<a id="__codelineno-21-72" name="__codelineno-21-72" href="#__codelineno-21-72"></a>        <span class="k">if</span> <span class="n">access_type</span> <span class="o">==</span> <span class="s1">'write'</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">writable</span><span class="p">:</span>
+<a id="__codelineno-21-73" name="__codelineno-21-73" href="#__codelineno-21-73"></a>            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"Write protection fault (COW?)"</span>
+<a id="__codelineno-21-74" name="__codelineno-21-74" href="#__codelineno-21-74"></a>        <span class="k">if</span> <span class="n">access_type</span> <span class="o">==</span> <span class="s1">'execute'</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">executable</span><span class="p">:</span>
+<a id="__codelineno-21-75" name="__codelineno-21-75" href="#__codelineno-21-75"></a>            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"Execute protection fault (NX)"</span>
+<a id="__codelineno-21-76" name="__codelineno-21-76" href="#__codelineno-21-76"></a>
+<a id="__codelineno-21-77" name="__codelineno-21-77" href="#__codelineno-21-77"></a>        <span class="c1"># 更新 A/D 位</span>
+<a id="__codelineno-21-78" name="__codelineno-21-78" href="#__codelineno-21-78"></a>        <span class="n">entry</span><span class="o">.</span><span class="n">accessed</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-21-79" name="__codelineno-21-79" href="#__codelineno-21-79"></a>        <span class="k">if</span> <span class="n">access_type</span> <span class="o">==</span> <span class="s1">'write'</span><span class="p">:</span>
+<a id="__codelineno-21-80" name="__codelineno-21-80" href="#__codelineno-21-80"></a>            <span class="n">entry</span><span class="o">.</span><span class="n">dirty</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-21-81" name="__codelineno-21-81" href="#__codelineno-21-81"></a>
+<a id="__codelineno-21-82" name="__codelineno-21-82" href="#__codelineno-21-82"></a>        <span class="c1"># 计算物理地址</span>
+<a id="__codelineno-21-83" name="__codelineno-21-83" href="#__codelineno-21-83"></a>        <span class="n">phys_addr</span> <span class="o">=</span> <span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">frame</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_offset_bits</span><span class="p">)</span> <span class="o">|</span> <span class="n">offset</span>
+<a id="__codelineno-21-84" name="__codelineno-21-84" href="#__codelineno-21-84"></a>        <span class="k">return</span> <span class="n">phys_addr</span><span class="p">,</span> <span class="s2">"OK"</span>
+<a id="__codelineno-21-85" name="__codelineno-21-85" href="#__codelineno-21-85"></a>
+<a id="__codelineno-21-86" name="__codelineno-21-86" href="#__codelineno-21-86"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+<a id="__codelineno-21-87" name="__codelineno-21-87" href="#__codelineno-21-87"></a>    <span class="n">pt</span> <span class="o">=</span> <span class="n">MultiLevelPageTable</span><span class="p">()</span>
+<a id="__codelineno-21-88" name="__codelineno-21-88" href="#__codelineno-21-88"></a>
+<a id="__codelineno-21-89" name="__codelineno-21-89" href="#__codelineno-21-89"></a>    <span class="c1"># 映射虚拟页 0x1000 到物理页框 0x500</span>
+<a id="__codelineno-21-90" name="__codelineno-21-90" href="#__codelineno-21-90"></a>    <span class="n">pt</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="mh">0x1000</span><span class="p">,</span> <span class="mh">0x500</span><span class="p">,</span> <span class="p">{</span><span class="s1">'writable'</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>  <span class="c1"># 只读页（模拟 COW）</span>
+<a id="__codelineno-21-91" name="__codelineno-21-91" href="#__codelineno-21-91"></a>    <span class="n">pt</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="mh">0x2000</span><span class="p">,</span> <span class="mh">0x800</span><span class="p">,</span> <span class="p">{</span><span class="s1">'executable'</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>  <span class="c1"># 不可执行页</span>
+<a id="__codelineno-21-92" name="__codelineno-21-92" href="#__codelineno-21-92"></a>    <span class="n">pt</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="mh">0x3000</span><span class="p">,</span> <span class="mh">0xA00</span><span class="p">)</span>  <span class="c1"># 正常页</span>
+<a id="__codelineno-21-93" name="__codelineno-21-93" href="#__codelineno-21-93"></a>
+<a id="__codelineno-21-94" name="__codelineno-21-94" href="#__codelineno-21-94"></a>    <span class="c1"># 测试翻译</span>
+<a id="__codelineno-21-95" name="__codelineno-21-95" href="#__codelineno-21-95"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"Read 0x1000:"</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="mh">0x1000</span><span class="p">,</span> <span class="s1">'read'</span><span class="p">))</span>
+<a id="__codelineno-21-96" name="__codelineno-21-96" href="#__codelineno-21-96"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"Write 0x1000:"</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="mh">0x1000</span><span class="p">,</span> <span class="s1">'write'</span><span class="p">))</span>  <span class="c1"># 应该触发写保护</span>
+<a id="__codelineno-21-97" name="__codelineno-21-97" href="#__codelineno-21-97"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"Execute 0x2000:"</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="mh">0x2000</span><span class="p">,</span> <span class="s1">'execute'</span><span class="p">))</span>  <span class="c1"># 应该触发 NX</span>
+<a id="__codelineno-21-98" name="__codelineno-21-98" href="#__codelineno-21-98"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"Read 0x4000:"</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="mh">0x4000</span><span class="p">,</span> <span class="s1">'read'</span><span class="p">))</span>  <span class="c1"># 应该缺页</span>
+<a id="__codelineno-21-99" name="__codelineno-21-99" href="#__codelineno-21-99"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"Write 0x3000:"</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="mh">0x3000</span><span class="p">,</span> <span class="s1">'write'</span><span class="p">))</span>  <span class="c1"># 正常写入</span>
+</code></pre></div>
+<h3 id="2python">实验2：Python 页面置换算法模拟<a class="headerlink" href="#2python" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># src/simulators/page_replacement_sim.py</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">deque</span><span class="p">,</span> <span class="n">OrderedDict</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">fifo_replacement</span><span class="p">(</span><span class="n">access_sequence</span><span class="p">,</span> <span class="n">num_frames</span><span class="p">):</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">frames</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">page_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>    <span class="n">hits</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="n">misses</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">access_sequence</span><span class="p">:</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>        <span class="k">if</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">page_set</span><span class="p">:</span>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>            <span class="n">hits</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>            <span class="n">misses</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">num_frames</span><span class="p">:</span>
+<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a>                <span class="n">evicted</span> <span class="o">=</span> <span class="n">frames</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>                <span class="n">page_set</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">evicted</span><span class="p">)</span>
+<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a>            <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+<a id="__codelineno-22-19" name="__codelineno-22-19" href="#__codelineno-22-19"></a>            <span class="n">page_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+<a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a>
+<a id="__codelineno-22-21" name="__codelineno-22-21" href="#__codelineno-22-21"></a>    <span class="k">return</span> <span class="n">hits</span><span class="p">,</span> <span class="n">misses</span>
+<a id="__codelineno-22-22" name="__codelineno-22-22" href="#__codelineno-22-22"></a>
+<a id="__codelineno-22-23" name="__codelineno-22-23" href="#__codelineno-22-23"></a><span class="k">def</span><span class="w"> </span><span class="nf">lru_replacement</span><span class="p">(</span><span class="n">access_sequence</span><span class="p">,</span> <span class="n">num_frames</span><span class="p">):</span>
+<a id="__codelineno-22-24" name="__codelineno-22-24" href="#__codelineno-22-24"></a>    <span class="n">cache</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>  <span class="c1"># page -&gt; True, 按访问顺序排列</span>
+<a id="__codelineno-22-25" name="__codelineno-22-25" href="#__codelineno-22-25"></a>    <span class="n">hits</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-26" name="__codelineno-22-26" href="#__codelineno-22-26"></a>    <span class="n">misses</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-27" name="__codelineno-22-27" href="#__codelineno-22-27"></a>
+<a id="__codelineno-22-28" name="__codelineno-22-28" href="#__codelineno-22-28"></a>    <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">access_sequence</span><span class="p">:</span>
+<a id="__codelineno-22-29" name="__codelineno-22-29" href="#__codelineno-22-29"></a>        <span class="k">if</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span>
+<a id="__codelineno-22-30" name="__codelineno-22-30" href="#__codelineno-22-30"></a>            <span class="n">hits</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-22-31" name="__codelineno-22-31" href="#__codelineno-22-31"></a>            <span class="n">cache</span><span class="o">.</span><span class="n">move_to_end</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>  <span class="c1"># 移到最新</span>
+<a id="__codelineno-22-32" name="__codelineno-22-32" href="#__codelineno-22-32"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-22-33" name="__codelineno-22-33" href="#__codelineno-22-33"></a>            <span class="n">misses</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-22-34" name="__codelineno-22-34" href="#__codelineno-22-34"></a>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">num_frames</span><span class="p">:</span>
+<a id="__codelineno-22-35" name="__codelineno-22-35" href="#__codelineno-22-35"></a>                <span class="n">cache</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># 淘汰最久未用</span>
+<a id="__codelineno-22-36" name="__codelineno-22-36" href="#__codelineno-22-36"></a>            <span class="n">cache</span><span class="p">[</span><span class="n">page</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-22-37" name="__codelineno-22-37" href="#__codelineno-22-37"></a>
+<a id="__codelineno-22-38" name="__codelineno-22-38" href="#__codelineno-22-38"></a>    <span class="k">return</span> <span class="n">hits</span><span class="p">,</span> <span class="n">misses</span>
+<a id="__codelineno-22-39" name="__codelineno-22-39" href="#__codelineno-22-39"></a>
+<a id="__codelineno-22-40" name="__codelineno-22-40" href="#__codelineno-22-40"></a><span class="k">def</span><span class="w"> </span><span class="nf">clock_replacement</span><span class="p">(</span><span class="n">access_sequence</span><span class="p">,</span> <span class="n">num_frames</span><span class="p">):</span>
+<a id="__codelineno-22-41" name="__codelineno-22-41" href="#__codelineno-22-41"></a>    <span class="n">frames</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_frames</span>
+<a id="__codelineno-22-42" name="__codelineno-22-42" href="#__codelineno-22-42"></a>    <span class="n">referenced</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_frames</span>
+<a id="__codelineno-22-43" name="__codelineno-22-43" href="#__codelineno-22-43"></a>    <span class="n">pointer</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-44" name="__codelineno-22-44" href="#__codelineno-22-44"></a>    <span class="n">hits</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-45" name="__codelineno-22-45" href="#__codelineno-22-45"></a>    <span class="n">misses</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-46" name="__codelineno-22-46" href="#__codelineno-22-46"></a>
+<a id="__codelineno-22-47" name="__codelineno-22-47" href="#__codelineno-22-47"></a>    <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">access_sequence</span><span class="p">:</span>
+<a id="__codelineno-22-48" name="__codelineno-22-48" href="#__codelineno-22-48"></a>        <span class="k">if</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
+<a id="__codelineno-22-49" name="__codelineno-22-49" href="#__codelineno-22-49"></a>            <span class="n">hits</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-22-50" name="__codelineno-22-50" href="#__codelineno-22-50"></a>            <span class="n">referenced</span><span class="p">[</span><span class="n">frames</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">page</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># 设置引用位</span>
+<a id="__codelineno-22-51" name="__codelineno-22-51" href="#__codelineno-22-51"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-22-52" name="__codelineno-22-52" href="#__codelineno-22-52"></a>            <span class="n">misses</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-22-53" name="__codelineno-22-53" href="#__codelineno-22-53"></a>            <span class="c1"># Clock 算法：找 referenced=False 的页</span>
+<a id="__codelineno-22-54" name="__codelineno-22-54" href="#__codelineno-22-54"></a>            <span class="k">while</span> <span class="n">referenced</span><span class="p">[</span><span class="n">pointer</span><span class="p">]:</span>
+<a id="__codelineno-22-55" name="__codelineno-22-55" href="#__codelineno-22-55"></a>                <span class="n">referenced</span><span class="p">[</span><span class="n">pointer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># 给第二次机会</span>
+<a id="__codelineno-22-56" name="__codelineno-22-56" href="#__codelineno-22-56"></a>                <span class="n">pointer</span> <span class="o">=</span> <span class="p">(</span><span class="n">pointer</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">num_frames</span>
+<a id="__codelineno-22-57" name="__codelineno-22-57" href="#__codelineno-22-57"></a>            <span class="c1"># 换出</span>
+<a id="__codelineno-22-58" name="__codelineno-22-58" href="#__codelineno-22-58"></a>            <span class="n">frames</span><span class="p">[</span><span class="n">pointer</span><span class="p">]</span> <span class="o">=</span> <span class="n">page</span>
+<a id="__codelineno-22-59" name="__codelineno-22-59" href="#__codelineno-22-59"></a>            <span class="n">referenced</span><span class="p">[</span><span class="n">pointer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-22-60" name="__codelineno-22-60" href="#__codelineno-22-60"></a>            <span class="n">pointer</span> <span class="o">=</span> <span class="p">(</span><span class="n">pointer</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">num_frames</span>
+<a id="__codelineno-22-61" name="__codelineno-22-61" href="#__codelineno-22-61"></a>
+<a id="__codelineno-22-62" name="__codelineno-22-62" href="#__codelineno-22-62"></a>    <span class="k">return</span> <span class="n">hits</span><span class="p">,</span> <span class="n">misses</span>
+<a id="__codelineno-22-63" name="__codelineno-22-63" href="#__codelineno-22-63"></a>
+<a id="__codelineno-22-64" name="__codelineno-22-64" href="#__codelineno-22-64"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+<a id="__codelineno-22-65" name="__codelineno-22-65" href="#__codelineno-22-65"></a>    <span class="n">seq</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<a id="__codelineno-22-66" name="__codelineno-22-66" href="#__codelineno-22-66"></a>    <span class="n">frames</span> <span class="o">=</span> <span class="mi">3</span>
+<a id="__codelineno-22-67" name="__codelineno-22-67" href="#__codelineno-22-67"></a>
+<a id="__codelineno-22-68" name="__codelineno-22-68" href="#__codelineno-22-68"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Access sequence: </span><span class="si">{</span><span class="n">seq</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-22-69" name="__codelineno-22-69" href="#__codelineno-22-69"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Frames: </span><span class="si">{</span><span class="n">frames</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-22-70" name="__codelineno-22-70" href="#__codelineno-22-70"></a>
+<a id="__codelineno-22-71" name="__codelineno-22-71" href="#__codelineno-22-71"></a>    <span class="n">h</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">fifo_replacement</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">frames</span><span class="p">)</span>
+<a id="__codelineno-22-72" name="__codelineno-22-72" href="#__codelineno-22-72"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"FIFO:  hits=</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">, misses=</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">, hit_rate=</span><span class="si">{</span><span class="n">h</span><span class="o">/</span><span class="p">(</span><span class="n">h</span><span class="o">+</span><span class="n">m</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%"</span><span class="p">)</span>
+<a id="__codelineno-22-73" name="__codelineno-22-73" href="#__codelineno-22-73"></a>
+<a id="__codelineno-22-74" name="__codelineno-22-74" href="#__codelineno-22-74"></a>    <span class="n">h</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">lru_replacement</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">frames</span><span class="p">)</span>
+<a id="__codelineno-22-75" name="__codelineno-22-75" href="#__codelineno-22-75"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"LRU:   hits=</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">, misses=</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">, hit_rate=</span><span class="si">{</span><span class="n">h</span><span class="o">/</span><span class="p">(</span><span class="n">h</span><span class="o">+</span><span class="n">m</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%"</span><span class="p">)</span>
+<a id="__codelineno-22-76" name="__codelineno-22-76" href="#__codelineno-22-76"></a>
+<a id="__codelineno-22-77" name="__codelineno-22-77" href="#__codelineno-22-77"></a>    <span class="n">h</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">clock_replacement</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">frames</span><span class="p">)</span>
+<a id="__codelineno-22-78" name="__codelineno-22-78" href="#__codelineno-22-78"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Clock: hits=</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">, misses=</span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">, hit_rate=</span><span class="si">{</span><span class="n">h</span><span class="o">/</span><span class="p">(</span><span class="n">h</span><span class="o">+</span><span class="n">m</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%"</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="_2">进阶实验<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>实现 Linux 的 Active/Inactive 双链表页面置换</li>
+<li>模拟 COW：fork 后父子进程共享页，写入时复制</li>
+<li>模拟 TLB：实现 TLB 缓存，统计 TLB miss rate</li>
+<li>测试 Belady 异常：FIFO 在增加页框时命中率下降</li>
+</ul>
+<hr />
+<h2 id="_3">参考资源<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Linux 源码 <code>mm/memory.c</code> — 缺页处理、COW</li>
+<li>Linux 源码 <code>mm/vmscan.c</code> — 页面回收</li>
+<li>Linux 源码 <code>arch/x86/mm/</code> — x86 页表操作</li>
+<li><em>Operating Systems: Three Easy Pieces</em> — 虚拟内存章节（免费在线）</li>
+<li><em>Understanding the Linux Kernel</em> Ch.9 — 内存寻址</li>
+<li>Intel SDM Vol.3 Ch.4 — 页表和地址翻译的硬件规范</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

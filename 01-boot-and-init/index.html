@@ -1,0 +1,2185 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="系统性学习操作系统底层原理与设计哲学">
+      
+      
+        <meta name="author" content="wanglh39">
+      
+      
+      
+        <link rel="prev" href="../00-design-philosophy/">
+      
+      
+        <link rel="next" href="../02-process-scheduling/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>启动与初始化 - OS Learning Journey</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#01-" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="OS Learning Journey" class="md-header__button md-logo" aria-label="OS Learning Journey" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OS Learning Journey
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              启动与初始化
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/wanglh39/os" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wanglh39/os
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../00-design-philosophy/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  设计哲学总论
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  启动与初始化
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../02-process-scheduling/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  进程与调度
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../03-memory-management/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  内存管理
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../04-virtual-memory/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  虚拟内存
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../05-file-system/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  文件系统
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../06-io-device/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  I/O 与设备驱动
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../07-syscall-kernel/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  系统调用
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../08-concurrency-sync/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  并发与同步
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OS Learning Journey" class="md-nav__button md-logo" aria-label="OS Learning Journey" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    OS Learning Journey
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/wanglh39/os" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wanglh39/os
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-design-philosophy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    设计哲学总论
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    启动与初始化
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    启动与初始化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        一、Design Philosophy：启动过程在解决什么问题？
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="一、Design Philosophy：启动过程在解决什么问题？">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 核心矛盾
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 为什么不能一步到位？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#historical-evolution-bios-uefi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        二、Historical Evolution：从 BIOS 到 UEFI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="二、Historical Evolution：从 BIOS 到 UEFI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-bios-1981-2010s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 BIOS 时代（1981-2010s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-uefi-2010s-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 UEFI 时代（2010s-现在）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-secure-boot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Secure Boot 的设计哲学
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-mechanismlinux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        三、Core Mechanism：Linux 启动的完整流程
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="三、Core Mechanism：Linux 启动的完整流程">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 全景图
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 阶段详解
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.2 阶段详解">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1uefibios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段1：UEFI/BIOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2bootloadergrub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段2：Bootloader（GRUB）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段3：内核早期初始化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4start_kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段4：start_kernel() — 内核主初始化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5rest_init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段5：rest_init() — 从内核到用户态
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-initramfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 initramfs：为什么需要它？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        四、Trade-offs：启动设计中的关键权衡
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="四、Trade-offs：启动设计中的关键权衡">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 压缩 vs 不压缩
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 内联驱动 vs 模块化驱动
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 并行初始化 vs 串行初始化
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-analysislinux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        五、Real-world Analysis：Linux 源码中的关键数据结构
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="五、Real-world Analysis：Linux 源码中的关键数据结构">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-boot_params-bootloader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 boot_params — 内核与 bootloader 的通信协议
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-init_task-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 init_task — 进程 0 的静态初始化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-init_mm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 init_mm — 内核地址空间的静态初始化
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hands-on-lablab01-bootloader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        六、Hands-on Lab：lab01-bootloader
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="六、Hands-on Lab：lab01-bootloader">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验目标
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验内容
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        关键代码片段
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        进阶实验
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考资源
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-process-scheduling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    进程与调度
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-memory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    内存管理
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-virtual-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    虚拟内存
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-file-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    文件系统
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-io-device/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    I/O 与设备驱动
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-syscall-kernel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    系统调用
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-concurrency-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    并发与同步
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        一、Design Philosophy：启动过程在解决什么问题？
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="一、Design Philosophy：启动过程在解决什么问题？">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 核心矛盾
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 为什么不能一步到位？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#historical-evolution-bios-uefi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        二、Historical Evolution：从 BIOS 到 UEFI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="二、Historical Evolution：从 BIOS 到 UEFI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-bios-1981-2010s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 BIOS 时代（1981-2010s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-uefi-2010s-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 UEFI 时代（2010s-现在）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-secure-boot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Secure Boot 的设计哲学
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-mechanismlinux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        三、Core Mechanism：Linux 启动的完整流程
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="三、Core Mechanism：Linux 启动的完整流程">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 全景图
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 阶段详解
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.2 阶段详解">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1uefibios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段1：UEFI/BIOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2bootloadergrub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段2：Bootloader（GRUB）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段3：内核早期初始化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4start_kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段4：start_kernel() — 内核主初始化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5rest_init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段5：rest_init() — 从内核到用户态
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-initramfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 initramfs：为什么需要它？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        四、Trade-offs：启动设计中的关键权衡
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="四、Trade-offs：启动设计中的关键权衡">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 压缩 vs 不压缩
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 内联驱动 vs 模块化驱动
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 并行初始化 vs 串行初始化
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-analysislinux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        五、Real-world Analysis：Linux 源码中的关键数据结构
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="五、Real-world Analysis：Linux 源码中的关键数据结构">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-boot_params-bootloader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 boot_params — 内核与 bootloader 的通信协议
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-init_task-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 init_task — 进程 0 的静态初始化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-init_mm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 init_mm — 内核地址空间的静态初始化
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hands-on-lablab01-bootloader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        六、Hands-on Lab：lab01-bootloader
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="六、Hands-on Lab：lab01-bootloader">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验目标
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验内容
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        关键代码片段
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        进阶实验
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考资源
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="01-">01 - 启动与初始化<a class="headerlink" href="#01-" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>"The journey of a thousand miles begins with a single boot."</p>
+</blockquote>
+<hr />
+<h2 id="design-philosophy">一、Design Philosophy：启动过程在解决什么问题？<a class="headerlink" href="#design-philosophy" title="Permanent link">&para;</a></h2>
+<h3 id="11">1.1 核心矛盾<a class="headerlink" href="#11" title="Permanent link">&para;</a></h3>
+<p>启动过程面临一个根本性的<strong>鸡生蛋问题</strong>：</p>
+<ul>
+<li>OS 代码存在磁盘上，但读取磁盘需要 OS 的文件系统驱动</li>
+<li>OS 需要运行在内存中，但加载代码到内存需要执行代码</li>
+<li>OS 需要 CPU 处于特定模式（保护模式/长模式），但切换模式需要执行代码</li>
+</ul>
+<p><strong>解决方案：分阶段启动——每个阶段为下一个阶段准备环境。</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>通电 → BIOS/UEFI → Bootloader → Kernel → Init
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>       (固件)      (过渡层)     (内核)    (用户态)
+</code></pre></div>
+<p>每个阶段的设计哲学：</p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>能做什么</th>
+<th>不能做什么</th>
+<th>为下一阶段准备什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BIOS/UEFI</td>
+<td>硬件自检、读取第一个扇区</td>
+<td>不理解文件系统</td>
+<td>找到并执行 bootloader</td>
+</tr>
+<tr>
+<td>Bootloader</td>
+<td>理解简单文件系统、切换 CPU 模式</td>
+<td>不能管理进程/内存</td>
+<td>加载内核到内存、传递参数</td>
+</tr>
+<tr>
+<td>Kernel</td>
+<td>初始化所有子系统</td>
+<td>还没有用户进程</td>
+<td>建立进程、内存、文件系统抽象</td>
+</tr>
+<tr>
+<td>Init</td>
+<td>启动用户服务</td>
+<td>运行在 user mode</td>
+<td>完整的用户态环境</td>
+</tr>
+</tbody>
+</table>
+<h3 id="12">1.2 为什么不能一步到位？<a class="headerlink" href="#12" title="Permanent link">&para;</a></h3>
+<p>因为<strong>硬件的限制</strong>和<strong>复杂性的递进</strong>：</p>
+<ol>
+<li>CPU 通电后处于<strong>实模式</strong>（Real Mode），只能寻址 1MB 内存，没有内存保护</li>
+<li>实模式下无法运行现代 OS——需要切换到<strong>保护模式</strong>（32位）或<strong>长模式</strong>（64位）</li>
+<li>切换模式需要设置 GDT（全局描述符表）、页表等数据结构</li>
+<li>这些数据结构需要内存，但内存管理还没初始化</li>
+<li>所以必须<strong>逐步建立</strong>——先有最简单的内存布局，再建立更复杂的</li>
+</ol>
+<p><strong>设计哲学：渐进式初始化——先建立最小可行环境，再逐步增强。</strong></p>
+<hr />
+<h2 id="historical-evolution-bios-uefi">二、Historical Evolution：从 BIOS 到 UEFI<a class="headerlink" href="#historical-evolution-bios-uefi" title="Permanent link">&para;</a></h2>
+<h3 id="21-bios-1981-2010s">2.1 BIOS 时代（1981-2010s）<a class="headerlink" href="#21-bios-1981-2010s" title="Permanent link">&para;</a></h3>
+<p>BIOS（Basic Input/Output System）是 IBM PC 的遗产：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>通电 → CPU 跳转到 0xFFFF0（BIOS 入口） → POST（自检） → 读取磁盘第一个扇区（512字节） → 执行
+</code></pre></div>
+<p>BIOS 的核心限制：
+- <strong>16位实模式</strong>：只能寻址 1MB 内存
+- <strong>MBR 分区表</strong>：最多 4 个主分区，最大 2TB 磁盘
+- <strong>512字节引导扇区</strong>：太小了，连一个像样的文件系统驱动都放不下
+- <strong>没有网络启动</strong>（后来通过 PXE 扩展）
+- <strong>串行初始化</strong>：每个设备依次检测，启动慢</p>
+<h3 id="22-uefi-2010s-">2.2 UEFI 时代（2010s-现在）<a class="headerlink" href="#22-uefi-2010s-" title="Permanent link">&para;</a></h3>
+<p>UEFI（Unified Extensible Firmware Interface）解决了 BIOS 的所有核心限制：</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>BIOS</th>
+<th>UEFI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU 模式</td>
+<td>16位实模式</td>
+<td>直接进入 64位长模式</td>
+</tr>
+<tr>
+<td>分区表</td>
+<td>MBR（4分区，2TB限制）</td>
+<td>GPT（128分区，无限制）</td>
+</tr>
+<tr>
+<td>引导程序</td>
+<td>512字节扇区</td>
+<td>EFI System Partition 上的 .efi 文件</td>
+</tr>
+<tr>
+<td>文件系统</td>
+<td>不支持</td>
+<td>支持 FAT32（至少）</td>
+</tr>
+<tr>
+<td>网络</td>
+<td>PXE（有限）</td>
+<td>内置网络栈</td>
+</tr>
+<tr>
+<td>初始化</td>
+<td>串行</td>
+<td>可并行</td>
+</tr>
+<tr>
+<td>安全</td>
+<td>无</td>
+<td>Secure Boot</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么 UEFI 能直接进入 64 位模式？</strong> 因为 UEFI 固件本身就是一个微型 OS，它在固件阶段就完成了 CPU 模式切换和基本内存初始化。</p>
+<h3 id="23-secure-boot">2.3 Secure Boot 的设计哲学<a class="headerlink" href="#23-secure-boot" title="Permanent link">&para;</a></h3>
+<p>Secure Boot 解决的问题是：<strong>如何确保启动链的每一步都是可信的？</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>UEFI 固件 → 验证 bootloader 签名 → 验证 kernel 签名 → 验证内核模块签名
+</code></pre></div>
+<p>每一级验证下一级的签名，形成<strong>信任链</strong>。如果任何一级签名验证失败，启动中止。</p>
+<p><strong>设计哲学：信任锚点 + 链式验证——从一个可信的根出发，逐步扩展信任范围。</strong></p>
+<p>这是 OS 安全设计的核心模式，后面在系统调用和并发同步中还会看到类似的设计。</p>
+<hr />
+<h2 id="core-mechanismlinux">三、Core Mechanism：Linux 启动的完整流程<a class="headerlink" href="#core-mechanismlinux" title="Permanent link">&para;</a></h2>
+<h3 id="31">3.1 全景图<a class="headerlink" href="#31" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>┌──────────────────────────────────────────────────────────────┐
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>│ 1. UEFI/BIOS                                                  │
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>│    - POST (Power-On Self-Test)                                │
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>│    - 初始化基本硬件                                            │
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>│    - 找到启动设备，加载 bootloader                             │
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>├──────────────────────────────────────────────────────────────┤
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>│ 2. Bootloader (GRUB)                                          │
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>│    - 读取内核镜像 (vmlinuz) 和 initramfs                      │
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>│    - 切换 CPU 到保护模式/长模式                                │
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>│    - 设置启动参数 (cmdline)                                    │
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>│    - 跳转到内核入口                                            │
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>├──────────────────────────────────────────────────────────────┤
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>│ 3. Kernel 早期初始化 (实模式/保护模式)                         │
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>│    - arch/x86/boot/ 下的代码                                   │
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>│    - setup.elf: 设置 GDT、切换到保护模式                       │
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>│    - compressed/head_64.S: 解压内核、切换到长模式              │
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>├──────────────────────────────────────────────────────────────┤
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>│ 4. Kernel 主初始化 (长模式)                                    │
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>│    - start_kernel() in init/main.c                            │
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>│    - 初始化所有子系统：内存、调度、中断、文件系统...            │
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>│    - 创建第一个进程 (idle/0)                                   │
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>├──────────────────────────────────────────────────────────────┤
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>│ 5. Init 进程                                                   │
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>│    - kernel_init() → 执行 /sbin/init (或 systemd)             │
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>│    - 启动用户态服务                                            │
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>└──────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<h3 id="32">3.2 阶段详解<a class="headerlink" href="#32" title="Permanent link">&para;</a></h3>
+<h4 id="1uefibios">阶段1：UEFI/BIOS<a class="headerlink" href="#1uefibios" title="Permanent link">&para;</a></h4>
+<p>CPU 通电后，指令指针（RIP）被硬件设置为 <code>0xFFFF0</code>（BIOS）或 UEFI 固件入口。</p>
+<p>BIOS 做的事：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">// 伪代码</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kt">void</span><span class="w"> </span><span class="nf">bios_main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">post</span><span class="p">();</span><span class="w">              </span><span class="c1">// 硬件自检</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">init_hardware</span><span class="p">();</span><span class="w">     </span><span class="c1">// 初始化基本硬件（键盘、显示、磁盘控制器）</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="c1">// 读取磁盘第一个扇区（MBR）到 0x7C00</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="n">read_sector</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mh">0x7C00</span><span class="p">);</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="c1">// 跳转到 0x7C00 执行 bootloader</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">    </span><span class="p">((</span><span class="kt">void</span><span class="p">(</span><span class="o">*</span><span class="p">)())</span><span class="mh">0x7C00</span><span class="p">)();</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="p">}</span>
+</code></pre></div></p>
+<p>为什么是 <code>0x7C00</code>？这是 IBM PC BIOS 的历史决定——0x7C00 在 1MB 实模式地址空间的低端，留出了足够空间给 BIOS 数据区（0x400-0x500）和引导程序本身。</p>
+<h4 id="2bootloadergrub">阶段2：Bootloader（GRUB）<a class="headerlink" href="#2bootloadergrub" title="Permanent link">&para;</a></h4>
+<p>GRUB 的工作流程：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>GRUB Stage 1 (446字节，在MBR中)
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  → GRUB Stage 1.5 (在MBR后的扇区，理解文件系统)
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    → GRUB Stage 2 (在文件系统中，完整功能)
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>      → 加载 vmlinuz + initramfs
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>      → 切换 CPU 模式
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>      → 跳转到内核入口
+</code></pre></div>
+<p>GRUB 传递给内核的关键信息：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">// Linux boot protocol 要求 bootloader 传递的结构</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">boot_params</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="c1">// 命令行参数</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">cmdline_ptr</span><span class="p">;</span><span class="w">           </span><span class="c1">// 如 "root=/dev/sda1 ro quiet"</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="c1">// 内存布局信息</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">e820_entry</span><span class="w"> </span><span class="n">e820_map</span><span class="p">[];</span><span class="w"> </span><span class="c1">// BIOS 提供的内存映射</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="c1">// 内核加载位置</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">code32_start</span><span class="p">;</span><span class="w">        </span><span class="c1">// 内核入口地址</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">    </span><span class="c1">// initramfs 位置</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">initrd_start</span><span class="p">;</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">initrd_size</span><span class="p">;</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">    </span><span class="c1">// 显示模式信息</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="p">};</span>
+</code></pre></div>
+<p><strong>设计哲学：bootloader 和内核之间通过</strong>结构化协议<strong>通信，而不是硬编码。</strong> 这使得不同的 bootloader（GRUB、systemd-boot、直接 UEFI 启动）都能启动同一个内核。</p>
+<h4 id="3">阶段3：内核早期初始化<a class="headerlink" href="#3" title="Permanent link">&para;</a></h4>
+<p>内核镜像 <code>vmlinuz</code> 实际上是<strong>压缩的</strong>。启动时先执行一小段解压代码：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// arch/x86/boot/compressed/head_64.S（简化）</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nl">startup_64:</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="c1">// 1. 设置基本环境</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="nf">leaq</span><span class="w">    </span><span class="no">_text</span><span class="p">(</span><span class="nv">%rip</span><span class="p">),</span><span class="w"> </span><span class="nv">%rbp</span><span class="w">     </span><span class="c1">// 获取内核加载地址</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="c1">// 2. 解压内核</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span><span class="nf">call</span><span class="w">    </span><span class="no">extract_kernel</span><span class="w">         </span><span class="c1">// 解压 vmlinuz 到最终位置</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="c1">// 3. 跳转到解压后的内核入口</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="nf">jmp</span><span class="w">     </span><span class="no">startup_64</span><span class="w">            </span><span class="c1">// 真正的内核入口</span>
+</code></pre></div>
+<p>为什么内核要压缩？
+- 减小磁盘占用和启动时 I/O 时间
+- 现代解压速度远快于磁盘读取速度
+- <strong>权衡</strong>：增加少量解压 CPU 时间，减少大量磁盘 I/O 时间</p>
+<h4 id="4start_kernel">阶段4：start_kernel() — 内核主初始化<a class="headerlink" href="#4start_kernel" title="Permanent link">&para;</a></h4>
+<p>这是整个启动过程中最重要的函数。位于 <code>init/main.c</code>：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">// init/main.c（简化版，展示关键调用顺序）</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">asmlinkage</span><span class="w"> </span><span class="n">__visible</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">__init</span><span class="w"> </span><span class="n">start_kernel</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="p">{</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="c1">// === 阶段A：最小可行环境 ===</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="n">set_task_stack_end_magic</span><span class="p">(</span><span class="o">&amp;</span><span class="n">init_task</span><span class="p">);</span><span class="w">  </span><span class="c1">// 初始化 init_task（PID 0）</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="n">setup_arch</span><span class="p">(</span><span class="o">&amp;</span><span class="n">command_line</span><span class="p">);</span><span class="w">             </span><span class="c1">// 架构相关初始化（页表、GDT、IDT）</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="n">mm_init_owner</span><span class="p">(</span><span class="o">&amp;</span><span class="n">init_mm</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">init_task</span><span class="p">);</span><span class="w">   </span><span class="c1">// 初始化 init_mm（内核地址空间）</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="c1">// === 阶段B：内存管理 ===</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="n">setup_per_cpu_areas</span><span class="p">();</span><span class="w">                 </span><span class="c1">// per-CPU 数据区域</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="n">build_all_zonelists</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span><span class="w">             </span><span class="c1">// 初始化内存 zone（DMA/DMA32/NORMAL）</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">    </span><span class="n">page_alloc_init</span><span class="p">();</span><span class="w">                     </span><span class="c1">// 页面分配器</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">    </span><span class="n">mm_init</span><span class="p">();</span><span class="w">                             </span><span class="c1">// 内存管理子系统（slab, vmalloc 等）</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">    </span><span class="c1">// === 阶段C：中断与调度 ===</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">    </span><span class="n">trap_init</span><span class="p">();</span><span class="w">                           </span><span class="c1">// 异常/中断处理（IDT 设置）</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">    </span><span class="n">init_IRQ</span><span class="p">();</span><span class="w">                            </span><span class="c1">// 硬件中断</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">    </span><span class="n">tick_init</span><span class="p">();</span><span class="w">                           </span><span class="c1">// 时钟初始化</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">    </span><span class="n">timer_init</span><span class="p">();</span><span class="w">                          </span><span class="c1">// 定时器子系统</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="w">    </span><span class="n">sched_init</span><span class="p">();</span><span class="w">                          </span><span class="c1">// 调度器初始化</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="w">    </span><span class="c1">// === 阶段D：控制台与文件系统 ===</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="w">    </span><span class="n">console_init</span><span class="p">();</span><span class="w">                        </span><span class="c1">// 控制台（能看到启动日志了！）</span>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="w">    </span><span class="n">vfs_caches_init</span><span class="p">();</span><span class="w">                     </span><span class="c1">// VFS 缓存（dentry、inode）</span>
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="w">    </span><span class="n">rest_init</span><span class="p">();</span><span class="w">                           </span><span class="c1">// 创建 init 进程，进入调度</span>
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>注意初始化顺序的设计逻辑</strong>：</p>
+<ol>
+<li>先初始化<strong>内存</strong>——因为后面所有子系统都需要分配内存</li>
+<li>再初始化<strong>中断</strong>——因为设备初始化需要中断支持</li>
+<li>再初始化<strong>调度器</strong>——因为需要创建进程</li>
+<li>最后初始化<strong>文件系统</strong>——因为需要前述所有基础设施</li>
+</ol>
+<p><strong>这不是随意的顺序，而是严格的依赖关系决定的。</strong></p>
+<h4 id="5rest_init">阶段5：rest_init() — 从内核到用户态<a class="headerlink" href="#5rest_init" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">// init/main.c（简化）</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">noinline</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">__ref</span><span class="w"> </span><span class="n">rest_init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="p">{</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="c1">// 创建 PID 1（init/systemd 进程）</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="n">pid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">kernel_thread</span><span class="p">(</span><span class="n">kernel_init</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">CLONE_FS</span><span class="p">);</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="c1">// PID 0 变成 idle 进程</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span><span class="n">cpu_startup_entry</span><span class="p">(</span><span class="n">CPUHP_ONLINE</span><span class="p">);</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="p">}</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">__ref</span><span class="w"> </span><span class="n">kernel_init</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">unused</span><span class="p">)</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="p">{</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">    </span><span class="c1">// 等待设备初始化完成</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">    </span><span class="n">wait_for_completion</span><span class="p">(</span><span class="o">&amp;</span><span class="n">kthreadd_done</span><span class="p">);</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="w">    </span><span class="c1">// 尝试执行 init 程序</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">try_to_run_init_process</span><span class="p">(</span><span class="s">"/sbin/init"</span><span class="p">)</span><span class="w"> </span><span class="o">||</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="w">        </span><span class="o">!</span><span class="n">try_to_run_init_process</span><span class="p">(</span><span class="s">"/etc/init"</span><span class="p">)</span><span class="w"> </span><span class="o">||</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="w">        </span><span class="o">!</span><span class="n">try_to_run_init_process</span><span class="p">(</span><span class="s">"/bin/init"</span><span class="p">)</span><span class="w"> </span><span class="o">||</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="w">        </span><span class="o">!</span><span class="n">try_to_run_init_process</span><span class="p">(</span><span class="s">"/bin/sh"</span><span class="p">))</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="w">        </span><span class="n">panic</span><span class="p">(</span><span class="s">"No init found"</span><span class="p">);</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>关键设计决策</strong>：</p>
+<ol>
+<li><strong>PID 0 是 idle 进程</strong>——当没有其他进程可运行时，CPU 执行 idle 进程（它只是循环执行 HLT 指令让 CPU 休眠）</li>
+<li><strong>PID 1 是 init 进程</strong>——所有用户进程的祖先，如果它死了，系统 panic</li>
+<li><strong>init 的查找路径</strong>——按顺序尝试多个路径，这是<strong>容错设计</strong>的体现</li>
+</ol>
+<h3 id="33-initramfs">3.3 initramfs：为什么需要它？<a class="headerlink" href="#33-initramfs" title="Permanent link">&para;</a></h3>
+<p>内核启动时面临另一个鸡生蛋问题：</p>
+<ul>
+<li>内核需要挂载根文件系统（rootfs）才能启动 init</li>
+<li>但挂载 rootfs 需要文件系统驱动和磁盘驱动</li>
+<li>这些驱动在 rootfs 里</li>
+</ul>
+<p><strong>解决方案：initramfs——一个临时的小型文件系统，内嵌在内核启动过程中。</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>Bootloader 加载 vmlinuz + initramfs
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>  → 内核解压 initramfs 到内存中的 tmpfs
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  → 内核执行 initramfs 中的 /init 脚本
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  → /init 加载必要的驱动模块
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>  → /init 挂载真正的 rootfs
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>  → /init 执行 switch_root 切换到真正的 rootfs
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>  → 真正的 rootfs 上的 /sbin/init 开始执行
+</code></pre></div>
+<p>initramfs 中的 <code>/init</code> 通常是一个脚本或小型程序：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="ch">#!/bin/sh</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># initramfs /init（简化）</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>mount<span class="w"> </span>-t<span class="w"> </span>proc<span class="w"> </span>none<span class="w"> </span>/proc
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>mount<span class="w"> </span>-t<span class="w"> </span>sysfs<span class="w"> </span>none<span class="w"> </span>/sys
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="c1"># 加载磁盘驱动</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>modprobe<span class="w"> </span>ahci<span class="w">          </span><span class="c1"># SATA 驱动</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>modprobe<span class="w"> </span>sd_mod<span class="w">        </span><span class="c1"># SCSI 磁盘驱动</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>modprobe<span class="w"> </span>ext4<span class="w">          </span><span class="c1"># 文件系统驱动</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="c1"># 挂载真正的根文件系统</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>mount<span class="w"> </span>/dev/sda1<span class="w"> </span>/mnt/root
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="c1"># 切换到真正的根文件系统</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="nb">exec</span><span class="w"> </span>switch_root<span class="w"> </span>/mnt/root<span class="w"> </span>/sbin/init
+</code></pre></div>
+<p><strong>设计哲学：用临时环境解决循环依赖——先建立一个最小环境，用它来建立完整环境，然后丢弃临时环境。</strong></p>
+<hr />
+<h2 id="trade-offs">四、Trade-offs：启动设计中的关键权衡<a class="headerlink" href="#trade-offs" title="Permanent link">&para;</a></h2>
+<h3 id="41-vs">4.1 压缩 vs 不压缩<a class="headerlink" href="#41-vs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>不压缩内核</td>
+<td>启动快（无需解压）</td>
+<td>磁盘占用大、I/O 时间长</td>
+</tr>
+<tr>
+<td>压缩内核</td>
+<td>磁盘占用小、I/O 时间短</td>
+<td>需要 CPU 解压时间</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Linux 的选择</strong>：默认压缩（gzip/zstd），因为现代 CPU 解压速度 &gt;&gt; 磁盘读取速度。</p>
+<h3 id="42-vs">4.2 内联驱动 vs 模块化驱动<a class="headerlink" href="#42-vs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>所有驱动编译进内核</td>
+<td>不需要 initramfs</td>
+<td>内核镜像巨大、无法动态加载</td>
+</tr>
+<tr>
+<td>驱动作为模块</td>
+<td>内核镜像小、灵活</td>
+<td>需要 initramfs 来加载启动所需模块</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Linux 的选择</strong>：混合方案——关键驱动（磁盘控制器、根文件系统）可以内联或通过 initramfs 加载，其他驱动作为模块动态加载。</p>
+<h3 id="43-vs">4.3 并行初始化 vs 串行初始化<a class="headerlink" href="#43-vs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>串行初始化</td>
+<td>简单、易调试、依赖关系清晰</td>
+<td>启动慢</td>
+</tr>
+<tr>
+<td>并行初始化</td>
+<td>启动快</td>
+<td>依赖关系复杂、难以调试</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Linux 的演进</strong>：
+- SysV init：严格串行，启动慢
+- Upstart：事件驱动，部分并行
+- systemd：完全并行 + 依赖图，启动快</p>
+<p>systemd 的核心设计：用<strong>依赖图</strong>（dependency graph）描述服务间的关系，然后<strong>拓扑排序</strong>找出可并行启动的服务。</p>
+<hr />
+<h2 id="real-world-analysislinux">五、Real-world Analysis：Linux 源码中的关键数据结构<a class="headerlink" href="#real-world-analysislinux" title="Permanent link">&para;</a></h2>
+<h3 id="51-boot_params-bootloader">5.1 boot_params — 内核与 bootloader 的通信协议<a class="headerlink" href="#51-boot_params-bootloader" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1">// arch/x86/include/uapi/asm/bootparam.h</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">boot_params</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">screen_info</span><span class="w"> </span><span class="n">screen_info</span><span class="p">;</span><span class="w">         </span><span class="c1">// 显示信息</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">apm_bios_info</span><span class="w"> </span><span class="n">apm_bios_info</span><span class="p">;</span><span class="w">     </span><span class="c1">// APM BIOS 信息</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="n">__u64</span><span class="w">  </span><span class="n">tboot_addr</span><span class="p">;</span><span class="w">                      </span><span class="c1">// Trusted Boot 地址</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">setup_header</span><span class="w"> </span><span class="n">hdr</span><span class="p">;</span><span class="w">                </span><span class="c1">// 启动头（关键！）</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">    </span><span class="n">__u8</span><span class="w">  </span><span class="n">_pad8</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">e820_entry</span><span class="w"> </span><span class="n">e820_map</span><span class="p">[</span><span class="n">E820MAX</span><span class="p">];</span><span class="w">    </span><span class="c1">// 内存映射（关键！）</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">    </span><span class="n">__u8</span><span class="w">  </span><span class="n">_pad88</span><span class="p">[</span><span class="mi">48</span><span class="p">];</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">edd_info</span><span class="w"> </span><span class="n">eddbuf</span><span class="p">[</span><span class="n">EDDMAXNR</span><span class="p">];</span><span class="w">       </span><span class="c1">// 磁盘信息</span>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="p">};</span>
+</code></pre></div>
+<p><code>e820_map</code> 是最重要的字段——它告诉内核物理内存的布局：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">e820_entry</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="n">__u64</span><span class="w"> </span><span class="n">addr</span><span class="p">;</span><span class="w">    </span><span class="c1">// 内存区域起始地址</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="n">__u64</span><span class="w"> </span><span class="n">size</span><span class="p">;</span><span class="w">    </span><span class="c1">// 内存区域大小</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="n">__u32</span><span class="w"> </span><span class="n">type</span><span class="p">;</span><span class="w">    </span><span class="c1">// 类型：1=可用, 2=保留, 3=ACPI, 4=NVS...</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="p">}</span><span class="w"> </span><span class="n">__attribute__</span><span class="p">((</span><span class="n">packed</span><span class="p">));</span>
+</code></pre></div>
+<p><strong>为什么需要 e820？</strong> 因为物理内存不是连续的——有 BIOS 保留区域、ACPI 区域、内存映射 I/O 区域等。内核必须知道哪些内存可以用，哪些不能用。</p>
+<h3 id="52-init_task-0">5.2 init_task — 进程 0 的静态初始化<a class="headerlink" href="#52-init_task-0" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1">// init/init_task.c</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="n">init_task</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="p">.</span><span class="n">state</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">                    </span><span class="c1">// TASK_RUNNING</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="p">.</span><span class="n">stack</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="n">init_stack</span><span class="p">,</span><span class="w">            </span><span class="c1">// 内核栈</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="p">.</span><span class="n">usage</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="n">REFCOUNT_INIT</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="w">     </span><span class="c1">// 引用计数</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span><span class="p">.</span><span class="n">flags</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="n">PF_KTHREAD</span><span class="p">,</span><span class="w">           </span><span class="c1">// 内核线程标志</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">    </span><span class="p">.</span><span class="n">prio</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="n">MAX_PRIO</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w">        </span><span class="c1">// 优先级</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">    </span><span class="p">.</span><span class="n">static_prio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MAX_PRIO</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">    </span><span class="p">.</span><span class="n">policy</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="n">SCHED_NORMAL</span><span class="p">,</span><span class="w">         </span><span class="c1">// 调度策略</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">    </span><span class="p">.</span><span class="n">mm</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">init_mm</span><span class="p">,</span><span class="w">             </span><span class="c1">// 内存描述符</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="w">    </span><span class="p">.</span><span class="n">active_mm</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">init_mm</span><span class="p">,</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="w">    </span><span class="p">.</span><span class="n">pid</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">                    </span><span class="c1">// PID 0</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="w">    </span><span class="p">.</span><span class="n">comm</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s">"swapper"</span><span class="p">,</span><span class="w">            </span><span class="c1">// 进程名</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="p">};</span>
+</code></pre></div>
+<p><strong>设计哲学：init_task 是静态初始化的——在调度器还没运行之前，就必须有一个"进程"存在。</strong> 它不是通过 <code>fork()</code> 创建的，而是编译时就定义好的。</p>
+<h3 id="53-init_mm">5.3 init_mm — 内核地址空间的静态初始化<a class="headerlink" href="#53-init_mm" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">// mm/init-mm.c</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">mm_struct</span><span class="w"> </span><span class="n">init_mm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="p">.</span><span class="n">mm_rb</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="n">RB_ROOT</span><span class="p">,</span><span class="w">              </span><span class="c1">// 红黑树根（VMA 管理）</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="p">.</span><span class="n">mm_mt</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="n">MTREE_INIT</span><span class="p">,</span><span class="w">           </span><span class="c1">// Maple tree（新内核）</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="p">.</span><span class="n">pgd</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="n">swapper_pg_dir</span><span class="p">,</span><span class="w">       </span><span class="c1">// 页全局目录</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span><span class="p">.</span><span class="n">mm_users</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">ATOMIC_INIT</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="w">       </span><span class="c1">// 用户计数</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">    </span><span class="p">.</span><span class="n">mm_count</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">ATOMIC_INIT</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w">       </span><span class="c1">// 总引用计数</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">    </span><span class="p">.</span><span class="n">map_count</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">                    </span><span class="c1">// VMA 数量</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="p">};</span>
+</code></pre></div>
+<p><strong>关键点：<code>swapper_pg_dir</code> 是内核的页全局目录，在编译时就分配好了。</strong> 内核地址空间在启动初期就已经建立，不需要动态分配。</p>
+<hr />
+<h2 id="hands-on-lablab01-bootloader">六、Hands-on Lab：lab01-bootloader<a class="headerlink" href="#hands-on-lablab01-bootloader" title="Permanent link">&para;</a></h2>
+<h3 id="_1">实验目标<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
+<p>编写一个最小的 bootloader，理解从"通电"到"执行代码"的完整链条。</p>
+<h3 id="_2">实验内容<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>编写 512 字节的 MBR bootloader</strong>（汇编）：</li>
+<li>在实模式下运行</li>
+<li>打印一条消息到屏幕</li>
+<li>
+<p>读取磁盘上的第二个扇区并跳转执行</p>
+</li>
+<li>
+<p><strong>编写一个简单的 second-stage loader</strong>（C + ASM）：</p>
+</li>
+<li>切换到保护模式（设置 GDT）</li>
+<li>
+<p>打印一条消息验证保护模式工作</p>
+</li>
+<li>
+<p><strong>用 QEMU 测试</strong>：
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># 创建启动磁盘镜像</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>dd<span class="w"> </span><span class="k">if</span><span class="o">=</span>/dev/zero<span class="w"> </span><span class="nv">of</span><span class="o">=</span>disk.img<span class="w"> </span><span class="nv">bs</span><span class="o">=</span><span class="m">512</span><span class="w"> </span><span class="nv">count</span><span class="o">=</span><span class="m">2880</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>dd<span class="w"> </span><span class="k">if</span><span class="o">=</span>boot.bin<span class="w"> </span><span class="nv">of</span><span class="o">=</span>disk.img<span class="w"> </span><span class="nv">bs</span><span class="o">=</span><span class="m">512</span><span class="w"> </span><span class="nv">conv</span><span class="o">=</span>notrunc
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>dd<span class="w"> </span><span class="k">if</span><span class="o">=</span>stage2.bin<span class="w"> </span><span class="nv">of</span><span class="o">=</span>disk.img<span class="w"> </span><span class="nv">bs</span><span class="o">=</span><span class="m">512</span><span class="w"> </span><span class="nv">seek</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="nv">conv</span><span class="o">=</span>notrunc
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="c1"># 在 QEMU 中启动</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>qemu-system-x86_64<span class="w"> </span>-drive<span class="w"> </span><span class="nv">format</span><span class="o">=</span>raw,file<span class="o">=</span>disk.img
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="_3">关键代码片段<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>MBR bootloader（NASM 汇编）：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1">; boot.asm — 512字节 MBR bootloader</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="err">[</span><span class="nf">BITS</span><span class="w"> </span><span class="mi">16</span><span class="p">]</span><span class="w">                    </span><span class="c1">; 16位实模式</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="err">[</span><span class="nf">ORG</span><span class="w"> </span><span class="mi">0x7C00</span><span class="p">]</span><span class="w">                 </span><span class="c1">; BIOS 加载到 0x7C00</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="nl">start:</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">    </span><span class="c1">; 设置段寄存器</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">    </span><span class="nf">xor</span><span class="w"> </span><span class="no">ax</span><span class="p">,</span><span class="w"> </span><span class="no">ax</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">ds</span><span class="p">,</span><span class="w"> </span><span class="no">ax</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">es</span><span class="p">,</span><span class="w"> </span><span class="no">ax</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">ss</span><span class="p">,</span><span class="w"> </span><span class="no">ax</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">sp</span><span class="p">,</span><span class="w"> </span><span class="mi">0x7C00</span><span class="w">           </span><span class="c1">; 栈指针</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">    </span><span class="c1">; 打印消息</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">si</span><span class="p">,</span><span class="w"> </span><span class="no">msg</span>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="w">    </span><span class="nf">call</span><span class="w"> </span><span class="no">print_string</span>
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a><span class="w">    </span><span class="c1">; 加载第二个扇区到 0x7E00</span>
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">ah</span><span class="p">,</span><span class="w"> </span><span class="mi">0x02</span><span class="w">             </span><span class="c1">; BIOS 读扇区功能</span>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">al</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="w">                </span><span class="c1">; 读1个扇区</span>
+<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">ch</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w">                </span><span class="c1">; 柱面0</span>
+<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">cl</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="w">                </span><span class="c1">; 扇区2（从1开始计数）</span>
+<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">dh</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w">                </span><span class="c1">; 磁头0</span>
+<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">dl</span><span class="p">,</span><span class="w"> </span><span class="mi">0x80</span><span class="w">             </span><span class="c1">; 第一块硬盘</span>
+<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">bx</span><span class="p">,</span><span class="w"> </span><span class="mi">0x7E00</span><span class="w">           </span><span class="c1">; 加载地址</span>
+<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a><span class="w">    </span><span class="nf">int</span><span class="w"> </span><span class="mi">0x13</span><span class="w">                 </span><span class="c1">; BIOS 磁盘中断</span>
+<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a>
+<a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a><span class="w">    </span><span class="c1">; 跳转到第二阶段</span>
+<a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a><span class="w">    </span><span class="nf">jmp</span><span class="w"> </span><span class="mi">0x7E00</span>
+<a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a>
+<a id="__codelineno-17-30" name="__codelineno-17-30" href="#__codelineno-17-30"></a><span class="nl">print_string:</span>
+<a id="__codelineno-17-31" name="__codelineno-17-31" href="#__codelineno-17-31"></a><span class="w">    </span><span class="nf">lodsb</span><span class="w">                    </span><span class="c1">; 加载 DS:SI 到 AL</span>
+<a id="__codelineno-17-32" name="__codelineno-17-32" href="#__codelineno-17-32"></a><span class="w">    </span><span class="nf">or</span><span class="w"> </span><span class="no">al</span><span class="p">,</span><span class="w"> </span><span class="no">al</span>
+<a id="__codelineno-17-33" name="__codelineno-17-33" href="#__codelineno-17-33"></a><span class="w">    </span><span class="nf">jz</span><span class="w"> </span><span class="no">.done</span>
+<a id="__codelineno-17-34" name="__codelineno-17-34" href="#__codelineno-17-34"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">ah</span><span class="p">,</span><span class="w"> </span><span class="mi">0x0E</span><span class="w">             </span><span class="c1">; BIOS teletype 功能</span>
+<a id="__codelineno-17-35" name="__codelineno-17-35" href="#__codelineno-17-35"></a><span class="w">    </span><span class="nf">mov</span><span class="w"> </span><span class="no">bh</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span>
+<a id="__codelineno-17-36" name="__codelineno-17-36" href="#__codelineno-17-36"></a><span class="w">    </span><span class="nf">int</span><span class="w"> </span><span class="mi">0x10</span>
+<a id="__codelineno-17-37" name="__codelineno-17-37" href="#__codelineno-17-37"></a><span class="w">    </span><span class="nf">jmp</span><span class="w"> </span><span class="no">print_string</span>
+<a id="__codelineno-17-38" name="__codelineno-17-38" href="#__codelineno-17-38"></a><span class="nl">.done:</span>
+<a id="__codelineno-17-39" name="__codelineno-17-39" href="#__codelineno-17-39"></a><span class="w">    </span><span class="nf">ret</span>
+<a id="__codelineno-17-40" name="__codelineno-17-40" href="#__codelineno-17-40"></a>
+<a id="__codelineno-17-41" name="__codelineno-17-41" href="#__codelineno-17-41"></a><span class="nf">msg</span><span class="w"> </span><span class="no">db</span><span class="w"> </span><span class="err">'</span><span class="no">Stage</span><span class="w"> </span><span class="mi">1</span><span class="p">:</span><span class="w"> </span><span class="no">Hello</span><span class="w"> </span><span class="no">from</span><span class="w"> </span><span class="no">MBR</span><span class="p">!</span><span class="err">'</span><span class="p">,</span><span class="w"> </span><span class="mi">0x0D</span><span class="p">,</span><span class="w"> </span><span class="mi">0x0A</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span>
+<a id="__codelineno-17-42" name="__codelineno-17-42" href="#__codelineno-17-42"></a>
+<a id="__codelineno-17-43" name="__codelineno-17-43" href="#__codelineno-17-43"></a><span class="nf">times</span><span class="w"> </span><span class="mi">510</span><span class="p">-(</span><span class="no">$-$$</span><span class="p">)</span><span class="w"> </span><span class="no">db</span><span class="w"> </span><span class="mi">0</span><span class="w">        </span><span class="c1">; 填充到510字节</span>
+<a id="__codelineno-17-44" name="__codelineno-17-44" href="#__codelineno-17-44"></a><span class="nf">dw</span><span class="w"> </span><span class="mi">0xAA55</span><span class="w">                    </span><span class="c1">; MBR 签名（必须！）</span>
+</code></pre></div>
+<p><strong>注意最后的 <code>0xAA55</code></strong>——这是 MBR 的魔数签名。BIOS 读取第一个扇区后，会检查最后两个字节是否是 <code>0xAA55</code>，如果不是就认为这不是有效的启动扇区。</p>
+<h3 id="_4">进阶实验<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>修改 bootloader，切换到保护模式并设置 GDT</li>
+<li>读取内核镜像并加载到内存</li>
+<li>实现 A20 地址线的启用（为什么需要？因为实模式下第21根地址线被锁定了）</li>
+</ul>
+<hr />
+<h2 id="_5">参考资源<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<ul>
+<li><em>Linux Boot Process</em>: https://0xax.gitbooks.io/linux-insides/content/Booting/</li>
+<li>Linux 源码 <code>init/main.c</code> — <code>start_kernel()</code> 是整个内核初始化的入口</li>
+<li>Linux 源码 <code>arch/x86/boot/</code> — 早期启动代码</li>
+<li><em>OSDev Wiki</em>: https://wiki.osdev.org — 操作系统开发的最佳参考</li>
+<li><em>Writing a Simple Operating System — from Scratch</em> (Nick Blundell) — bootloader 实践入门</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

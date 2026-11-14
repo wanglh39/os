@@ -1,0 +1,2481 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="系统性学习操作系统底层原理与设计哲学">
+      
+      
+        <meta name="author" content="wanglh39">
+      
+      
+      
+        <link rel="prev" href="../01-boot-and-init/">
+      
+      
+        <link rel="next" href="../03-memory-management/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>进程与调度 - OS Learning Journey</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#02-" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="OS Learning Journey" class="md-header__button md-logo" aria-label="OS Learning Journey" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OS Learning Journey
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              进程与调度
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/wanglh39/os" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wanglh39/os
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../00-design-philosophy/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  设计哲学总论
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../01-boot-and-init/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  启动与初始化
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  进程与调度
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../03-memory-management/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  内存管理
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../04-virtual-memory/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  虚拟内存
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../05-file-system/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  文件系统
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../06-io-device/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  I/O 与设备驱动
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../07-syscall-kernel/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  系统调用
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../08-concurrency-sync/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  并发与同步
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OS Learning Journey" class="md-nav__button md-logo" aria-label="OS Learning Journey" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    OS Learning Journey
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/wanglh39/os" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wanglh39/os
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-design-philosophy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    设计哲学总论
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-boot-and-init/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    启动与初始化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    进程与调度
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    进程与调度
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        一、Design Philosophy：进程抽象在解决什么问题？
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="一、Design Philosophy：进程抽象在解决什么问题？">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 核心问题
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 进程 vs 程序
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 为什么需要"进程"而不是直接运行程序？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#historical-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        二、Historical Evolution：进程模型的演进
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="二、Historical Evolution：进程模型的演进">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-1950s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 早期批处理（1950s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-1960s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 多道程序设计（1960s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-unix-1970s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Unix 的进程模型（1970s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-1980s-1990s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 线程的引入（1980s-1990s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-linux-lwp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Linux 的线程实现：轻量级进程（LWP）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-mechanism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        三、Core Mechanism：进程的内部实现
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="三、Core Mechanism：进程的内部实现">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-task_struct-pcb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 task_struct — 进程控制块（PCB）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 进程状态机
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-context-switch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 上下文切换（Context Switch）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-fork-cow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 fork() 的实现：写时复制（COW）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#on-cfs-eevdf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        四、调度器：从 O(n) 到 CFS 到 EEVDF
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="四、调度器：从 O(n) 到 CFS 到 EEVDF">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 调度器的核心问题
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-on-linux-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 O(n) 调度器（Linux 2.4）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-o1-linux-26-2002" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 O(1) 调度器（Linux 2.6, 2002）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-cfs-linux-2623-2007" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 CFS — 完全公平调度器（Linux 2.6.23, 2007）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-eevdf-linux-66-2023" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 EEVDF — 最早虚拟截止时间优先（Linux 6.6, 2023）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        五、Trade-offs：调度器设计中的关键权衡
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="五、Trade-offs：调度器设计中的关键权衡">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 时间片大小
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-vs-per-cpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 全局队列 vs per-CPU 队列
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 抢占式 vs 协作式
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-analysislinux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        六、Real-world Analysis：Linux 调度器源码
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="六、Real-world Analysis：Linux 调度器源码">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-sched_class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 调度类（sched_class）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-cfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 CFS 的核心数据结构
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 负载均衡
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hands-on-lablab02-scheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        七、Hands-on Lab：lab02-scheduler
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="七、Hands-on Lab：lab02-scheduler">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验目标
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验1：Python 调度算法模拟器
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验2：C 上下文切换
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        进阶实验
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考资源
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-memory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    内存管理
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-virtual-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    虚拟内存
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-file-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    文件系统
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-io-device/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    I/O 与设备驱动
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-syscall-kernel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    系统调用
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-concurrency-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    并发与同步
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        一、Design Philosophy：进程抽象在解决什么问题？
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="一、Design Philosophy：进程抽象在解决什么问题？">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 核心问题
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 进程 vs 程序
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 为什么需要"进程"而不是直接运行程序？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#historical-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        二、Historical Evolution：进程模型的演进
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="二、Historical Evolution：进程模型的演进">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-1950s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 早期批处理（1950s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-1960s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 多道程序设计（1960s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-unix-1970s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Unix 的进程模型（1970s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-1980s-1990s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 线程的引入（1980s-1990s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-linux-lwp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Linux 的线程实现：轻量级进程（LWP）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-mechanism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        三、Core Mechanism：进程的内部实现
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="三、Core Mechanism：进程的内部实现">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-task_struct-pcb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 task_struct — 进程控制块（PCB）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 进程状态机
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-context-switch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 上下文切换（Context Switch）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-fork-cow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 fork() 的实现：写时复制（COW）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#on-cfs-eevdf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        四、调度器：从 O(n) 到 CFS 到 EEVDF
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="四、调度器：从 O(n) 到 CFS 到 EEVDF">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 调度器的核心问题
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-on-linux-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 O(n) 调度器（Linux 2.4）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-o1-linux-26-2002" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 O(1) 调度器（Linux 2.6, 2002）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-cfs-linux-2623-2007" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 CFS — 完全公平调度器（Linux 2.6.23, 2007）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-eevdf-linux-66-2023" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 EEVDF — 最早虚拟截止时间优先（Linux 6.6, 2023）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        五、Trade-offs：调度器设计中的关键权衡
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="五、Trade-offs：调度器设计中的关键权衡">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 时间片大小
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-vs-per-cpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 全局队列 vs per-CPU 队列
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 抢占式 vs 协作式
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-analysislinux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        六、Real-world Analysis：Linux 调度器源码
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="六、Real-world Analysis：Linux 调度器源码">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-sched_class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 调度类（sched_class）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-cfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 CFS 的核心数据结构
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 负载均衡
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hands-on-lablab02-scheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        七、Hands-on Lab：lab02-scheduler
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="七、Hands-on Lab：lab02-scheduler">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验目标
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验1：Python 调度算法模拟器
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验2：C 上下文切换
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        进阶实验
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考资源
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="02-">02 - 进程与调度<a class="headerlink" href="#02-" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>"A process is the operating system's fundamental abstraction for a running program."</p>
+</blockquote>
+<hr />
+<h2 id="design-philosophy">一、Design Philosophy：进程抽象在解决什么问题？<a class="headerlink" href="#design-philosophy" title="Permanent link">&para;</a></h2>
+<h3 id="11">1.1 核心问题<a class="headerlink" href="#11" title="Permanent link">&para;</a></h3>
+<p>单台计算机上只有一个 CPU（或少数几个核心），但我们需要"同时"运行几十甚至几百个程序。如何实现？</p>
+<p><strong>进程抽象的核心思想：让每个程序以为自己独占整个计算机。</strong></p>
+<p>这需要三个层面的支持：</p>
+<ol>
+<li><strong>CPU 虚拟化</strong>：通过时间片轮转，让每个进程轮流使用 CPU，每个进程都以为自己独占 CPU</li>
+<li><strong>内存虚拟化</strong>：通过虚拟内存，让每个进程拥有独立的地址空间（下一个主题详细讲）</li>
+<li><strong>隔离</strong>：一个进程的 bug 不能直接影响其他进程</li>
+</ol>
+<h3 id="12-vs">1.2 进程 vs 程序<a class="headerlink" href="#12-vs" title="Permanent link">&para;</a></h3>
+<p>程序是<strong>静态</strong>的——磁盘上的一组指令和数据。
+进程是<strong>动态</strong>的——程序的一次执行实例，包含运行时状态。</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>程序（磁盘上的 ELF 文件）
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  → 加载到内存
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    → 分配栈、堆
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>      → 创建进程控制块（PCB）
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        → 进程（运行中的实例）
+</code></pre></div>
+<h3 id="13">1.3 为什么需要"进程"而不是直接运行程序？<a class="headerlink" href="#13" title="Permanent link">&para;</a></h3>
+<p>如果 OS 不提供进程抽象，裸机上运行多个程序需要：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// 没有 OS 的多程序协作（协作式）</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kt">void</span><span class="w"> </span><span class="nf">program_a</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">        </span><span class="n">do_work</span><span class="p">();</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">        </span><span class="n">yield</span><span class="p">();</span><span class="w">  </span><span class="c1">// 主动让出 CPU</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">}</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="kt">void</span><span class="w"> </span><span class="nf">program_b</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">        </span><span class="n">do_work</span><span class="p">();</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">        </span><span class="n">yield</span><span class="p">();</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="p">}</span>
+</code></pre></div>
+<p>问题：
+- 每个程序必须<strong>主动</strong>让出 CPU——一个 bug（死循环）就能冻结整个系统
+- 程序之间没有内存隔离——一个程序可以覆盖另一个程序的内存
+- 没有统一的调度——谁先运行、运行多久完全靠自觉</p>
+<p><strong>进程抽象通过硬件支持（时钟中断 + 特权级）强制实现 CPU 共享和内存隔离。</strong></p>
+<hr />
+<h2 id="historical-evolution">二、Historical Evolution：进程模型的演进<a class="headerlink" href="#historical-evolution" title="Permanent link">&para;</a></h2>
+<h3 id="21-1950s">2.1 早期批处理（1950s）<a class="headerlink" href="#21-1950s" title="Permanent link">&para;</a></h3>
+<p>没有进程概念。一次只运行一个程序，运行完才加载下一个。</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>程序1 → 执行完毕 → 程序2 → 执行完毕 → 程序3 → ...
+</code></pre></div>
+<p>问题：CPU 大量时间在等待 I/O（读卡片、打印结果），利用率极低。</p>
+<h3 id="22-1960s">2.2 多道程序设计（1960s）<a class="headerlink" href="#22-1960s" title="Permanent link">&para;</a></h3>
+<p>多个程序同时驻留内存，当一个程序等待 I/O 时，切换到另一个程序。</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>程序1（执行中） → 程序1（等待I/O） → 程序2（执行中） → 程序2（等待I/O） → 程序1（执行中）...
+</code></pre></div>
+<p>这是<strong>进程</strong>概念的雏形——OS 需要记录每个程序的执行状态（寄存器、PC、内存位置），才能在切换后恢复执行。</p>
+<h3 id="23-unix-1970s">2.3 Unix 的进程模型（1970s）<a class="headerlink" href="#23-unix-1970s" title="Permanent link">&para;</a></h3>
+<p>Unix 确立了现代进程模型的核心设计：</p>
+<ol>
+<li><strong>fork() + exec()</strong> 分离创建和加载</li>
+<li><strong>进程 = 地址空间 + 执行上下文</strong></li>
+<li><strong>进程层次结构</strong>（父-子关系）</li>
+<li><strong>统一的进程标识</strong>（PID）</li>
+</ol>
+<h3 id="24-1980s-1990s">2.4 线程的引入（1980s-1990s）<a class="headerlink" href="#24-1980s-1990s" title="Permanent link">&para;</a></h3>
+<p>进程的问题：创建和切换开销大（需要切换地址空间）。</p>
+<p>线程的解决方案：<strong>同一进程内的多个执行流共享地址空间，但各有独立的栈和寄存器。</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>进程 = 地址空间 + 资源（文件描述符、信号等）
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>线程 = 执行上下文（栈、寄存器、PC）
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>一个进程可以有多个线程
+</code></pre></div>
+<h3 id="25-linux-lwp">2.5 Linux 的线程实现：轻量级进程（LWP）<a class="headerlink" href="#25-linux-lwp" title="Permanent link">&para;</a></h3>
+<p>Linux 的独特设计：<strong>线程和进程在内核中是同一个数据结构（task_struct）。</strong></p>
+<ul>
+<li>创建进程：<code>clone()</code> with <code>CLONE_VM | CLONE_FILES | ...</code>（共享一切）</li>
+<li>创建线程：<code>clone()</code> with 部分共享标志</li>
+<li>创建进程（传统）：<code>fork()</code> = <code>clone()</code> without sharing</li>
+</ul>
+<p><strong>设计哲学：统一抽象——用一套机制（task_struct + clone）实现进程和线程，通过参数控制共享程度。</strong></p>
+<hr />
+<h2 id="core-mechanism">三、Core Mechanism：进程的内部实现<a class="headerlink" href="#core-mechanism" title="Permanent link">&para;</a></h2>
+<h3 id="31-task_struct-pcb">3.1 task_struct — 进程控制块（PCB）<a class="headerlink" href="#31-task_struct-pcb" title="Permanent link">&para;</a></h3>
+<p><code>task_struct</code> 是 Linux 中最核心的数据结构之一，定义在 <code>include/linux/sched.h</code>：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="c1">// === 标识 ===</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="kt">pid_t</span><span class="w"> </span><span class="n">pid</span><span class="p">;</span><span class="w">                          </span><span class="c1">// 进程 ID</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="kt">pid_t</span><span class="w"> </span><span class="n">tgid</span><span class="p">;</span><span class="w">                         </span><span class="c1">// 线程组 ID（线程的 pid 不同，但 tgid 相同）</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">group_leader</span><span class="p">;</span><span class="w">   </span><span class="c1">// 线程组 leader</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="c1">// === 状态 ===</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="k">volatile</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">state</span><span class="p">;</span><span class="w">                </span><span class="c1">// TASK_RUNNING, TASK_INTERRUPTIBLE, etc.</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="c1">// === 调度信息 ===</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">prio</span><span class="p">,</span><span class="w"> </span><span class="n">static_prio</span><span class="p">,</span><span class="w"> </span><span class="n">normal_prio</span><span class="p">;</span><span class="w"> </span><span class="c1">// 优先级</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">rt_priority</span><span class="p">;</span><span class="w">           </span><span class="c1">// 实时优先级</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">sched_class</span><span class="w"> </span><span class="o">*</span><span class="n">sched_class</span><span class="p">;</span><span class="w"> </span><span class="c1">// 调度类</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">sched_entity</span><span class="w"> </span><span class="n">se</span><span class="p">;</span><span class="w">             </span><span class="c1">// CFS 调度实体</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">sched_rt_entity</span><span class="w"> </span><span class="n">rt</span><span class="p">;</span><span class="w">          </span><span class="c1">// 实时调度实体</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">    </span><span class="c1">// === 内存 ===</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">mm_struct</span><span class="w"> </span><span class="o">*</span><span class="n">mm</span><span class="p">;</span><span class="w">               </span><span class="c1">// 进程地址空间（线程共享）</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">mm_struct</span><span class="w"> </span><span class="o">*</span><span class="n">active_mm</span><span class="p">;</span><span class="w">        </span><span class="c1">// 当前活跃的地址空间</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">    </span><span class="c1">// === 家族关系 ===</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">parent</span><span class="p">;</span><span class="w">         </span><span class="c1">// 父进程</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">list_head</span><span class="w"> </span><span class="n">children</span><span class="p">;</span><span class="w">          </span><span class="c1">// 子进程链表</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">list_head</span><span class="w"> </span><span class="n">sibling</span><span class="p">;</span><span class="w">           </span><span class="c1">// 兄弟进程链表</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="w">    </span><span class="c1">// === 文件 ===</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">files_struct</span><span class="w"> </span><span class="o">*</span><span class="n">files</span><span class="p">;</span><span class="w">         </span><span class="c1">// 文件描述符表（线程共享）</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="w">    </span><span class="c1">// === 信号 ===</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">signal_struct</span><span class="w"> </span><span class="o">*</span><span class="n">signal</span><span class="p">;</span><span class="w">       </span><span class="c1">// 信号处理（线程共享）</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">sighand_struct</span><span class="w"> </span><span class="o">*</span><span class="n">sighand</span><span class="p">;</span><span class="w">     </span><span class="c1">// 信号处理器表</span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="w">    </span><span class="c1">// === 内核栈 ===</span>
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">stack</span><span class="p">;</span><span class="w">                        </span><span class="c1">// 内核栈</span>
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a><span class="w">    </span><span class="c1">// === 上下文 ===</span>
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">thread_struct</span><span class="w"> </span><span class="kr">thread</span><span class="p">;</span><span class="w">        </span><span class="c1">// CPU 上下文（寄存器快照）</span>
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a><span class="w">    </span><span class="c1">// ... 还有几百个字段</span>
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a><span class="p">};</span>
+</code></pre></div>
+<p><strong>设计哲学：task_struct 是一个"上帝对象"——它包含了进程的所有信息。</strong> 这违反了面向对象的"单一职责原则"，但在 OS 内核中，这是合理的：</p>
+<ul>
+<li>内核需要频繁访问进程的所有信息，分散存储会增加缓存未命中</li>
+<li>进程的所有属性在生命周期中紧密相关</li>
+<li>内核代码不追求"优雅的抽象"，而是追求"高效的实现"</li>
+</ul>
+<h3 id="32">3.2 进程状态机<a class="headerlink" href="#32" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>                    ┌──────────────┐
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>                    │  TASK_RUNNING │ ← 可运行（在运行队列中）
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>                    └──────┬───────┘
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>                           │
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>              ┌────────────┼────────────┐
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>              │ 被调度执行  │            │ 时间片用完
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>              ▼            │            ▼
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>        ┌──────────┐       │      ┌──────────────┐
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>        │ 正在CPU上 │       │      │ 回到运行队列  │
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>        │ 执行     │       │      └──────────────┘
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>        └────┬─────┘       │
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>             │ 等待I/O     │
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>             ▼             │
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    ┌──────────────────┐   │
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    │TASK_INTERRUPTIBLE│   │ ← 可被信号唤醒
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    │  (可中断睡眠)     │   │
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>    └────────┬─────────┘   │
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>             │ I/O完成     │
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>             ▼             │
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    ┌──────────────────┐   │
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>    │ TASK_RUNNING     │   │ ← 回到运行队列
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>    └──────────────────┘   │
+</code></pre></div>
+<p>关键状态：</p>
+<table>
+<thead>
+<tr>
+<th>状态</th>
+<th>含义</th>
+<th>何时进入</th>
+<th>何时退出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TASK_RUNNING</code></td>
+<td>可运行（在运行队列中或正在执行）</td>
+<td>默认状态</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>TASK_INTERRUPTIBLE</code></td>
+<td>可中断睡眠（等待事件，可被信号唤醒）</td>
+<td>等待 I/O、sleep()</td>
+<td>事件到来或收到信号</td>
+</tr>
+<tr>
+<td><code>TASK_UNINTERRUPTIBLE</code></td>
+<td>不可中断睡眠（等待事件，不可被信号唤醒）</td>
+<td>等待磁盘 I/O 等</td>
+<td>事件到来</td>
+</tr>
+<tr>
+<td><code>TASK_STOPPED</code></td>
+<td>停止（收到 SIGSTOP 等）</td>
+<td>信号 SIGSTOP/SIGTSTP</td>
+<td>信号 SIGCONT</td>
+</tr>
+<tr>
+<td><code>EXIT_ZOMBIE</code></td>
+<td>僵尸（已退出但父进程还没收尸）</td>
+<td>exit()</td>
+<td>父进程 wait()</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么有 <code>TASK_UNINTERRUPTIBLE</code>？</strong> 因为某些操作（如等待磁盘 I/O 完成）不应该被信号打断——如果打断，数据可能处于不一致状态。这是<strong>安全 vs 灵活</strong>的权衡。</p>
+<h3 id="33-context-switch">3.3 上下文切换（Context Switch）<a class="headerlink" href="#33-context-switch" title="Permanent link">&para;</a></h3>
+<p>上下文切换是进程管理的核心操作——保存当前进程的状态，加载下一个进程的状态。</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// 伪代码</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kt">void</span><span class="w"> </span><span class="nf">context_switch</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">prev</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">next</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="c1">// 1. 保存 prev 的寄存器到 prev-&gt;thread</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="n">save_registers</span><span class="p">(</span><span class="o">&amp;</span><span class="n">prev</span><span class="o">-&gt;</span><span class="kr">thread</span><span class="p">);</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="c1">// 2. 切换地址空间（如果不同）</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">prev</span><span class="o">-&gt;</span><span class="n">mm</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">next</span><span class="o">-&gt;</span><span class="n">mm</span><span class="p">)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">        </span><span class="n">switch_mm</span><span class="p">(</span><span class="n">prev</span><span class="o">-&gt;</span><span class="n">active_mm</span><span class="p">,</span><span class="w"> </span><span class="n">next</span><span class="o">-&gt;</span><span class="n">active_mm</span><span class="p">,</span><span class="w"> </span><span class="n">next</span><span class="p">);</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="c1">// 3. 切换内核栈</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span><span class="n">switch_to</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span><span class="w"> </span><span class="n">next</span><span class="p">,</span><span class="w"> </span><span class="n">prev</span><span class="p">);</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">    </span><span class="c1">// 4. 加载 next 的寄存器从 next-&gt;thread</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">    </span><span class="c1">// （此时已经在 next 的栈上执行了）</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">    </span><span class="n">restore_registers</span><span class="p">(</span><span class="o">&amp;</span><span class="n">next</span><span class="o">-&gt;</span><span class="kr">thread</span><span class="p">);</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="p">}</span>
+</code></pre></div>
+<p>实际实现（x86-64，简化）：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">; arch/x86/kernel/process_64.c: __switch_to_asm</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nl">__switch_to_asm:</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="c1">; 保存 callee-saved 寄存器到当前栈</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="nf">pushq</span><span class="w">   </span><span class="nv">%rbp</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="nf">pushq</span><span class="w">   </span><span class="nv">%rbx</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="nf">pushq</span><span class="w">   </span><span class="nv">%r12</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="nf">pushq</span><span class="w">   </span><span class="nv">%r13</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="nf">pushq</span><span class="w">   </span><span class="nv">%r14</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="nf">pushq</span><span class="w">   </span><span class="nv">%r15</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="c1">; 保存当前栈指针到 prev-&gt;thread.sp</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">    </span><span class="nf">movq</span><span class="w">    </span><span class="nv">%rsp</span><span class="p">,</span><span class="w"> </span><span class="no">TASK_threadsp</span><span class="p">(</span><span class="nv">%rdi</span><span class="p">)</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">    </span><span class="c1">; 加载 next-&gt;thread.sp 到栈指针</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">    </span><span class="nf">movq</span><span class="w">    </span><span class="no">TASK_threadsp</span><span class="p">(</span><span class="nv">%rsi</span><span class="p">),</span><span class="w"> </span><span class="nv">%rsp</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">    </span><span class="c1">; 恢复 callee-saved 寄存器从新栈</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">    </span><span class="nf">popq</span><span class="w">    </span><span class="nv">%r15</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">    </span><span class="nf">popq</span><span class="w">    </span><span class="nv">%r14</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="w">    </span><span class="nf">popq</span><span class="w">    </span><span class="nv">%r13</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="w">    </span><span class="nf">popq</span><span class="w">    </span><span class="nv">%r12</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="w">    </span><span class="nf">popq</span><span class="w">    </span><span class="nv">%rbx</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="w">    </span><span class="nf">popq</span><span class="w">    </span><span class="nv">%rbp</span>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="w">    </span><span class="c1">; 跳转到 __switch_to 完成 TLB 刷新等</span>
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="w">    </span><span class="nf">jmp</span><span class="w">     </span><span class="no">__switch_to</span>
+</code></pre></div>
+<p><strong>上下文切换的开销</strong>：</p>
+<ol>
+<li><strong>直接开销</strong>：保存/恢复寄存器（~100-200 cycles）</li>
+<li><strong>间接开销</strong>：TLB 刷新（切换地址空间时）、缓存失效（~1000-10000 cycles）</li>
+</ol>
+<p><strong>为什么切换地址空间这么贵？</strong> 因为切换 CR3（页表基址寄存器）会导致 TLB 全部失效，后续的内存访问都需要重新走页表翻译，大量 cache miss。</p>
+<p><strong>优化：内核线程共享内核地址空间</strong>。当从用户进程切换到内核线程时，不需要切换地址空间（<code>prev-&gt;active_mm == next-&gt;active_mm</code>），避免了 TLB 刷新。</p>
+<h3 id="34-fork-cow">3.4 fork() 的实现：写时复制（COW）<a class="headerlink" href="#34-fork-cow" title="Permanent link">&para;</a></h3>
+<p>fork() 创建子进程时，不是立即复制父进程的所有内存页，而是让子进程共享父进程的页，标记为只读。当任一进程写入时，才触发缺页异常，复制该页。</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">// kernel/fork.c（简化）</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kt">long</span><span class="w"> </span><span class="nf">_do_fork</span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">clone_flags</span><span class="p">,</span><span class="w"> </span><span class="p">...)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="p">{</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">p</span><span class="p">;</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="c1">// 1. 分配新的 task_struct</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">copy_process</span><span class="p">(</span><span class="n">clone_flags</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">    </span><span class="c1">// 2. 唤醒新进程</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">    </span><span class="n">wake_up_new_task</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">p</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">;</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="p">}</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="k">static</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">copy_process</span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">clone_flags</span><span class="p">,</span><span class="w"> </span><span class="p">...)</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="p">{</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">p</span><span class="p">;</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="w">    </span><span class="c1">// 分配 task_struct</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="w">    </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dup_task_struct</span><span class="p">(</span><span class="n">current</span><span class="p">);</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="w">    </span><span class="c1">// 复制内存空间（COW）</span>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">clone_flags</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">CLONE_VM</span><span class="p">)</span>
+<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="w">        </span><span class="n">p</span><span class="o">-&gt;</span><span class="n">mm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">current</span><span class="o">-&gt;</span><span class="n">mm</span><span class="p">;</span><span class="w">        </span><span class="c1">// 线程：共享地址空间</span>
+<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="w">    </span><span class="k">else</span>
+<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="w">        </span><span class="n">p</span><span class="o">-&gt;</span><span class="n">mm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">copy_mm</span><span class="p">(</span><span class="n">clone_flags</span><span class="p">,</span><span class="w"> </span><span class="n">current</span><span class="o">-&gt;</span><span class="n">mm</span><span class="p">);</span><span class="w">  </span><span class="c1">// 进程：COW 复制</span>
+<a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a>
+<a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a><span class="w">    </span><span class="c1">// 复制文件描述符表</span>
+<a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">clone_flags</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">CLONE_FILES</span><span class="p">)</span>
+<a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a><span class="w">        </span><span class="n">p</span><span class="o">-&gt;</span><span class="n">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">current</span><span class="o">-&gt;</span><span class="n">files</span><span class="p">;</span><span class="w">  </span><span class="c1">// 线程：共享</span>
+<a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a><span class="w">    </span><span class="k">else</span>
+<a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a><span class="w">        </span><span class="n">p</span><span class="o">-&gt;</span><span class="n">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">copy_files</span><span class="p">(</span><span class="n">clone_flags</span><span class="p">,</span><span class="w"> </span><span class="n">current</span><span class="o">-&gt;</span><span class="n">files</span><span class="p">);</span><span class="w">  </span><span class="c1">// 进程：复制</span>
+<a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a>
+<a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a><span class="w">    </span><span class="c1">// 复制信号处理器</span>
+<a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a>
+<a id="__codelineno-9-37" name="__codelineno-9-37" href="#__codelineno-9-37"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<a id="__codelineno-9-38" name="__codelineno-9-38" href="#__codelineno-9-38"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>COW 的设计哲学：延迟昂贵操作——只在真正需要时才付出代价。</strong></p>
+<p>如果子进程立即 exec()（这是最常见的模式），那么复制的页全部被丢弃，COW 避免了这次无用复制。</p>
+<hr />
+<h2 id="on-cfs-eevdf">四、调度器：从 O(n) 到 CFS 到 EEVDF<a class="headerlink" href="#on-cfs-eevdf" title="Permanent link">&para;</a></h2>
+<h3 id="41">4.1 调度器的核心问题<a class="headerlink" href="#41" title="Permanent link">&para;</a></h3>
+<p>给定 N 个可运行进程和 M 个 CPU 核心，如何决定：
+- 哪个进程在哪个核心上运行？
+- 每个进程运行多长时间？
+- 何时切换？</p>
+<p><strong>调度目标</strong>（互相矛盾）：
+- <strong>公平性</strong>：每个进程获得公平的 CPU 份额
+- <strong>吞吐量</strong>：单位时间内完成尽可能多的工作
+- <strong>延迟</strong>：交互式应用的响应时间尽可能短
+- <strong>优先级</strong>：重要进程优先获得 CPU</p>
+<h3 id="42-on-linux-24">4.2 O(n) 调度器（Linux 2.4）<a class="headerlink" href="#42-on-linux-24" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1">// 简化的 O(n) 调度器逻辑</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">pick_next_task</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">best</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">best_goodness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="c1">// 遍历所有可运行进程，找 goodness 最大的</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="n">for_each_task</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">state</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">TASK_RUNNING</span><span class="p">)</span><span class="w"> </span><span class="k">continue</span><span class="p">;</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">goodness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">calculate_goodness</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">goodness</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">best_goodness</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">            </span><span class="n">best_goodness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">goodness</span><span class="p">;</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">            </span><span class="n">best</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">best</span><span class="p">;</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>问题</strong>：每次调度都要遍历所有进程，复杂度 O(n)。当进程数达到数千时，调度开销显著。</p>
+<h3 id="43-o1-linux-26-2002">4.3 O(1) 调度器（Linux 2.6, 2002）<a class="headerlink" href="#43-o1-linux-26-2002" title="Permanent link">&para;</a></h3>
+<p>Ingo Molnár 的设计：用<strong>优先级数组</strong>替代遍历。</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">prio_array</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="n">DECLARE_BITMAP</span><span class="p">(</span><span class="n">bitmap</span><span class="p">,</span><span class="w"> </span><span class="n">MAX_PRIO</span><span class="p">);</span><span class="w">  </span><span class="c1">// 140个优先级的位图</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">list_head</span><span class="w"> </span><span class="n">queue</span><span class="p">[</span><span class="n">MAX_PRIO</span><span class="p">];</span><span class="w">  </span><span class="c1">// 每个优先级一个链表</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="p">};</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="k">struct</span><span class="w"> </span><span class="nc">runqueue</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">prio_array</span><span class="w"> </span><span class="o">*</span><span class="n">active</span><span class="p">;</span><span class="w">   </span><span class="c1">// 活跃队列</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">prio_array</span><span class="w"> </span><span class="o">*</span><span class="n">expired</span><span class="p">;</span><span class="w">  </span><span class="c1">// 过期队列</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="p">};</span>
+</code></pre></div>
+<p>调度逻辑：
+1. 在位图中找第一个被设置的位（O(1)）
+2. 从该优先级的链表中取第一个进程（O(1)）</p>
+<p><strong>问题</strong>：
+- 优先级映射复杂（nice 值到时间片的映射不直观）
+- 交互式进程的判定启发式算法复杂且容易出错
+- 不够公平——不同 nice 值的进程获得的 CPU 时间差异非线性</p>
+<h3 id="44-cfs-linux-2623-2007">4.4 CFS — 完全公平调度器（Linux 2.6.23, 2007）<a class="headerlink" href="#44-cfs-linux-2623-2007" title="Permanent link">&para;</a></h3>
+<p>CFS（Completely Fair Scheduler）的核心思想：<strong>维护每个进程的"虚拟运行时间"（vruntime），总是调度 vruntime 最小的进程。</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">sched_entity</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">rb_node</span><span class="w"> </span><span class="n">run_node</span><span class="p">;</span><span class="w">     </span><span class="c1">// 红黑树节点</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="n">u64</span><span class="w"> </span><span class="n">vruntime</span><span class="p">;</span><span class="w">                </span><span class="c1">// 虚拟运行时间</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="n">u64</span><span class="w"> </span><span class="n">exec_start</span><span class="p">;</span><span class="w">              </span><span class="c1">// 本次开始执行的时间</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="n">u64</span><span class="w"> </span><span class="n">sum_exec_runtime</span><span class="p">;</span><span class="w">        </span><span class="c1">// 总执行时间</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="p">};</span>
+</code></pre></div>
+<p>vruntime 的计算：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1">// 简化的 vruntime 更新逻辑</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kt">void</span><span class="w"> </span><span class="nf">update_vruntime</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">sched_entity</span><span class="w"> </span><span class="o">*</span><span class="n">se</span><span class="p">,</span><span class="w"> </span><span class="n">u64</span><span class="w"> </span><span class="n">delta_exec</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="c1">// delta_exec: 实际运行时间</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="c1">// 根据优先级缩放：优先级越高，vruntime 增长越慢</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="n">u64</span><span class="w"> </span><span class="n">delta_vruntime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">delta_exec</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">weight_of_0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">se</span><span class="o">-&gt;</span><span class="n">load</span><span class="p">.</span><span class="n">weight</span><span class="p">;</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="n">se</span><span class="o">-&gt;</span><span class="n">vruntime</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">delta_vruntime</span><span class="p">;</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>关键设计</strong>：
+- 优先级高的进程（nice 值低）的 <code>load.weight</code> 大，vruntime 增长慢 → 更频繁被调度
+- 优先级低的进程的 <code>load.weight</code> 小，vruntime 增长快 → 较少被调度
+- 但<strong>每个进程都会被调度</strong>——不会饿死</p>
+<p>数据结构：<strong>红黑树</strong>，按 vruntime 排序。最左边的节点（vruntime 最小）就是下一个要运行的进程。</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>红黑树（按 vruntime 排序）：
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>         [vruntime=50]
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>        /              \
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>   [vruntime=20]    [vruntime=80]
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>   /        \
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>[vruntime=10] [vruntime=30]
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>→ 最左节点 vruntime=10 是下一个运行的进程
+</code></pre></div>
+<p><strong>CFS 的设计哲学：用数学公式定义"公平"，用数据结构高效实现。</strong></p>
+<h3 id="45-eevdf-linux-66-2023">4.5 EEVDF — 最早虚拟截止时间优先（Linux 6.6, 2023）<a class="headerlink" href="#45-eevdf-linux-66-2023" title="Permanent link">&para;</a></h3>
+<p>CFS 的问题：对延迟敏感的工作负载（如交互式应用）响应不够好。</p>
+<p>EEVDF（Earliest Eligible Virtual Deadline First）的改进：
+- 引入<strong>虚拟截止时间</strong>（virtual deadline）概念
+- 优先调度截止时间最早的进程
+- 更精确的延迟控制</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">// EEVDF 的核心逻辑（简化）</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="c1">// 每个调度实体有一个 lag（滞后量）和 deadline</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">struct</span><span class="w"> </span><span class="nc">sched_entity</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="n">s64</span><span class="w"> </span><span class="n">lag</span><span class="p">;</span><span class="w">           </span><span class="c1">// 滞后量：实际获得的 CPU 时间 vs 应获得的</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="n">u64</span><span class="w"> </span><span class="n">deadline</span><span class="p">;</span><span class="w">      </span><span class="c1">// 虚拟截止时间</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span><span class="n">u64</span><span class="w"> </span><span class="n">vruntime</span><span class="p">;</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="p">};</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="c1">// 调度决策：</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="c1">// 1. 找 lag &lt;= 0 的进程（"有资格"运行的进程）</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="c1">// 2. 在有资格的进程中，选 deadline 最早的</span>
+</code></pre></div>
+<hr />
+<h2 id="trade-offs">五、Trade-offs：调度器设计中的关键权衡<a class="headerlink" href="#trade-offs" title="Permanent link">&para;</a></h2>
+<h3 id="51">5.1 时间片大小<a class="headerlink" href="#51" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>时间片</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>大（100ms）</td>
+<td>上下文切换开销小、吞吐量高</td>
+<td>交互式响应慢</td>
+</tr>
+<tr>
+<td>小（1ms）</td>
+<td>交互式响应快</td>
+<td>上下文切换开销占比大</td>
+</tr>
+<tr>
+<td>动态</td>
+<td>兼顾两者</td>
+<td>实现复杂</td>
+</tr>
+</tbody>
+</table>
+<p><strong>CFS 的选择</strong>：动态——目标延迟（target latency）内每个进程至少运行一次。默认 target latency = 6ms，时间片 = target_latency / nr_running。</p>
+<h3 id="52-vs-per-cpu">5.2 全局队列 vs per-CPU 队列<a class="headerlink" href="#52-vs-per-cpu" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>全局队列</td>
+<td>简单、自动负载均衡</td>
+<td>锁竞争严重（多核时）</td>
+</tr>
+<tr>
+<td>per-CPU 队列</td>
+<td>无锁竞争、缓存友好</td>
+<td>需要负载均衡机制</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Linux 的选择</strong>：per-CPU 运行队列 + 定期负载均衡。每个 CPU 有自己的 <code>struct rq</code>，定期检查其他 CPU 的队列是否更空闲，必要时迁移进程。</p>
+<h3 id="53-vs">5.3 抢占式 vs 协作式<a class="headerlink" href="#53-vs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>协作式</td>
+<td>简单、上下文切换只在安全点</td>
+<td>一个进程可以霸占 CPU</td>
+</tr>
+<tr>
+<td>抢占式</td>
+<td>公平、响应性好</td>
+<td>需要在任意点保存状态、复杂</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Linux 的选择</strong>：抢占式 + 多个抢占点：
+- 用户态抢占：时钟中断返回用户态时检查是否需要调度
+- 内核态抢占（CONFIG_PREEMPT）：内核代码也可以被抢占（实时性要求高的场景）
+- 自愿抢占（CONFIG_PREEMPT_VOLUNTARY）：内核代码在显式的 <code>might_sleep()</code> 点检查</p>
+<hr />
+<h2 id="real-world-analysislinux">六、Real-world Analysis：Linux 调度器源码<a class="headerlink" href="#real-world-analysislinux" title="Permanent link">&para;</a></h2>
+<h3 id="61-sched_class">6.1 调度类（sched_class）<a class="headerlink" href="#61-sched_class" title="Permanent link">&para;</a></h3>
+<p>Linux 调度器通过<strong>调度类</strong>实现策略的可插拔：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1">// include/linux/sched.h</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">sched_class</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">sched_class</span><span class="w"> </span><span class="o">*</span><span class="n">next</span><span class="p">;</span><span class="w">     </span><span class="c1">// 链表：下一个调度类</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">enqueue_task</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">rq</span><span class="w"> </span><span class="o">*</span><span class="n">rq</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">flags</span><span class="p">);</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">dequeue_task</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">rq</span><span class="w"> </span><span class="o">*</span><span class="n">rq</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">flags</span><span class="p">);</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">pick_next_task</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">rq</span><span class="w"> </span><span class="o">*</span><span class="n">rq</span><span class="p">);</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">put_prev_task</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">rq</span><span class="w"> </span><span class="o">*</span><span class="n">rq</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">p</span><span class="p">);</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">set_next_task</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">rq</span><span class="w"> </span><span class="o">*</span><span class="n">rq</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">first</span><span class="p">);</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">task_tick</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">rq</span><span class="w"> </span><span class="o">*</span><span class="n">rq</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">queued</span><span class="p">);</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="p">};</span>
+</code></pre></div>
+<p>调度类的优先级顺序：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>stop_sched_class → dl_sched_class → rt_sched_class → fair_sched_class → idle_sched_class
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>   (最高优先级)      (deadline)       (实时)           (CFS/EEVDF)       (idle)
+</code></pre></div>
+<p><code>pick_next_task()</code> 按优先级顺序依次调用每个调度类的 <code>pick_next_task</code>，第一个返回非 NULL 的就是下一个运行的进程。</p>
+<p><strong>设计哲学：调度类是策略模式的内核实现——不同的调度策略通过统一的接口插入调度框架。</strong></p>
+<h3 id="62-cfs">6.2 CFS 的核心数据结构<a class="headerlink" href="#62-cfs" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1">// kernel/sched/fair.c</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">cfs_rq</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">rb_root_cached</span><span class="w"> </span><span class="n">tasks_timeline</span><span class="p">;</span><span class="w">  </span><span class="c1">// 红黑树（按 vruntime 排序）</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">sched_entity</span><span class="w"> </span><span class="o">*</span><span class="n">curr</span><span class="p">;</span><span class="w">             </span><span class="c1">// 当前运行的调度实体</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span><span class="n">u64</span><span class="w"> </span><span class="n">min_vruntime</span><span class="p">;</span><span class="w">                      </span><span class="c1">// 最小 vruntime（用于新进程初始化）</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">    </span><span class="n">u64</span><span class="w"> </span><span class="n">avg_vruntime</span><span class="p">;</span><span class="w">                      </span><span class="c1">// 平均 vruntime（EEVDF 使用）</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">    </span><span class="n">s64</span><span class="w"> </span><span class="n">avg_load</span><span class="p">;</span><span class="w">                          </span><span class="c1">// 平均负载</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="p">};</span>
+</code></pre></div>
+<p><code>pick_next_task</code> 的核心逻辑（简化）：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">task_struct</span><span class="w"> </span><span class="o">*</span><span class="n">pick_next_task_fair</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">rq</span><span class="w"> </span><span class="o">*</span><span class="n">rq</span><span class="p">)</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="p">{</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">cfs_rq</span><span class="w"> </span><span class="o">*</span><span class="n">cfs_rq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">rq</span><span class="o">-&gt;</span><span class="n">cfs</span><span class="p">;</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">sched_entity</span><span class="w"> </span><span class="o">*</span><span class="n">se</span><span class="p">;</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">    </span><span class="c1">// 1. 从红黑树中找最左节点（vruntime 最小）</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="w">    </span><span class="n">se</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">__pick_first_entity</span><span class="p">(</span><span class="n">cfs_rq</span><span class="p">);</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">se</span><span class="p">)</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="w">    </span><span class="c1">// 2. 获取对应的 task_struct</span>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">task_of</span><span class="p">(</span><span class="n">se</span><span class="p">);</span>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="63">6.3 负载均衡<a class="headerlink" href="#63" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1">// kernel/sched/fair.c（简化）</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="kt">void</span><span class="w"> </span><span class="nf">rebalance_domains</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">rq</span><span class="w"> </span><span class="o">*</span><span class="n">rq</span><span class="p">,</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="n">cpu_idle_type</span><span class="w"> </span><span class="n">idle</span><span class="p">)</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="p">{</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">    </span><span class="c1">// 定期检查：当前 CPU 是否过载？其他 CPU 是否更空闲？</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">    </span><span class="c1">// 如果是，迁移一些进程到更空闲的 CPU</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="w">    </span><span class="n">for_each_domain</span><span class="p">(</span><span class="n">cpu</span><span class="p">,</span><span class="w"> </span><span class="n">sd</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="w">        </span><span class="c1">// sd: 调度域（SMT → MC → NUMA → ...）</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">sd</span><span class="o">-&gt;</span><span class="n">flags</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">SD_BALANCE_LOAD</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="w">            </span><span class="n">load_balance</span><span class="p">(</span><span class="n">cpu</span><span class="p">,</span><span class="w"> </span><span class="n">rq</span><span class="p">,</span><span class="w"> </span><span class="n">sd</span><span class="p">,</span><span class="w"> </span><span class="n">idle</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">balance</span><span class="p">);</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>调度域（sched_domain）</strong>是负载均衡的关键概念——它描述了 CPU 的拓扑结构：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>SMT 域（超线程兄弟）
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>  → MC 域（同一物理核）
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    → NUMA 域（同一 NUMA 节点）
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>      → 全局域
+</code></pre></div>
+<p>负载均衡优先在低层级域内进行（因为迁移代价更小——缓存更近）。</p>
+<hr />
+<h2 id="hands-on-lablab02-scheduler">七、Hands-on Lab：lab02-scheduler<a class="headerlink" href="#hands-on-lablab02-scheduler" title="Permanent link">&para;</a></h2>
+<h3 id="_1">实验目标<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
+<ol>
+<li>用 Python 模拟 5 种调度算法，直观理解它们的差异</li>
+<li>用 C 实现一个简单的上下文切换</li>
+</ol>
+<h3 id="1python">实验1：Python 调度算法模拟器<a class="headerlink" href="#1python" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># src/simulators/scheduler_sim.py</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">deque</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">heapq</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">Process</span><span class="p">:</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="n">pid</span><span class="p">:</span> <span class="nb">int</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>    <span class="n">arrival_time</span><span class="p">:</span> <span class="nb">int</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="n">burst_time</span><span class="p">:</span> <span class="nb">int</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>    <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>    <span class="n">remaining_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>    <span class="n">vruntime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># for CFS</span>
+<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>
+<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">remaining_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">burst_time</span>
+<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>
+<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a><span class="k">def</span><span class="w"> </span><span class="nf">fcfs</span><span class="p">(</span><span class="n">processes</span><span class="p">):</span>
+<a id="__codelineno-22-19" name="__codelineno-22-19" href="#__codelineno-22-19"></a><span class="w">    </span><span class="sd">"""先来先服务"""</span>
+<a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a>    <span class="n">processes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">processes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">arrival_time</span><span class="p">)</span>
+<a id="__codelineno-22-21" name="__codelineno-22-21" href="#__codelineno-22-21"></a>    <span class="n">timeline</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-22-22" name="__codelineno-22-22" href="#__codelineno-22-22"></a>    <span class="n">current_time</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-23" name="__codelineno-22-23" href="#__codelineno-22-23"></a>    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">processes</span><span class="p">:</span>
+<a id="__codelineno-22-24" name="__codelineno-22-24" href="#__codelineno-22-24"></a>        <span class="k">if</span> <span class="n">current_time</span> <span class="o">&lt;</span> <span class="n">p</span><span class="o">.</span><span class="n">arrival_time</span><span class="p">:</span>
+<a id="__codelineno-22-25" name="__codelineno-22-25" href="#__codelineno-22-25"></a>            <span class="n">current_time</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">arrival_time</span>
+<a id="__codelineno-22-26" name="__codelineno-22-26" href="#__codelineno-22-26"></a>        <span class="n">timeline</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p</span><span class="o">.</span><span class="n">pid</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span> <span class="n">current_time</span> <span class="o">+</span> <span class="n">p</span><span class="o">.</span><span class="n">burst_time</span><span class="p">))</span>
+<a id="__codelineno-22-27" name="__codelineno-22-27" href="#__codelineno-22-27"></a>        <span class="n">current_time</span> <span class="o">+=</span> <span class="n">p</span><span class="o">.</span><span class="n">burst_time</span>
+<a id="__codelineno-22-28" name="__codelineno-22-28" href="#__codelineno-22-28"></a>    <span class="k">return</span> <span class="n">timeline</span>
+<a id="__codelineno-22-29" name="__codelineno-22-29" href="#__codelineno-22-29"></a>
+<a id="__codelineno-22-30" name="__codelineno-22-30" href="#__codelineno-22-30"></a><span class="k">def</span><span class="w"> </span><span class="nf">round_robin</span><span class="p">(</span><span class="n">processes</span><span class="p">,</span> <span class="n">quantum</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<a id="__codelineno-22-31" name="__codelineno-22-31" href="#__codelineno-22-31"></a><span class="w">    </span><span class="sd">"""时间片轮转"""</span>
+<a id="__codelineno-22-32" name="__codelineno-22-32" href="#__codelineno-22-32"></a>    <span class="n">processes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">processes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">arrival_time</span><span class="p">)</span>
+<a id="__codelineno-22-33" name="__codelineno-22-33" href="#__codelineno-22-33"></a>    <span class="n">ready_queue</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
+<a id="__codelineno-22-34" name="__codelineno-22-34" href="#__codelineno-22-34"></a>    <span class="n">timeline</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-22-35" name="__codelineno-22-35" href="#__codelineno-22-35"></a>    <span class="n">current_time</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-36" name="__codelineno-22-36" href="#__codelineno-22-36"></a>    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-37" name="__codelineno-22-37" href="#__codelineno-22-37"></a>
+<a id="__codelineno-22-38" name="__codelineno-22-38" href="#__codelineno-22-38"></a>    <span class="k">while</span> <span class="n">ready_queue</span> <span class="ow">or</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">processes</span><span class="p">):</span>
+<a id="__codelineno-22-39" name="__codelineno-22-39" href="#__codelineno-22-39"></a>        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">processes</span><span class="p">)</span> <span class="ow">and</span> <span class="n">processes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">arrival_time</span> <span class="o">&lt;=</span> <span class="n">current_time</span><span class="p">:</span>
+<a id="__codelineno-22-40" name="__codelineno-22-40" href="#__codelineno-22-40"></a>            <span class="n">ready_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<a id="__codelineno-22-41" name="__codelineno-22-41" href="#__codelineno-22-41"></a>            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-22-42" name="__codelineno-22-42" href="#__codelineno-22-42"></a>
+<a id="__codelineno-22-43" name="__codelineno-22-43" href="#__codelineno-22-43"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">ready_queue</span><span class="p">:</span>
+<a id="__codelineno-22-44" name="__codelineno-22-44" href="#__codelineno-22-44"></a>            <span class="n">current_time</span> <span class="o">=</span> <span class="n">processes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">arrival_time</span>
+<a id="__codelineno-22-45" name="__codelineno-22-45" href="#__codelineno-22-45"></a>            <span class="k">continue</span>
+<a id="__codelineno-22-46" name="__codelineno-22-46" href="#__codelineno-22-46"></a>
+<a id="__codelineno-22-47" name="__codelineno-22-47" href="#__codelineno-22-47"></a>        <span class="n">p</span> <span class="o">=</span> <span class="n">ready_queue</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+<a id="__codelineno-22-48" name="__codelineno-22-48" href="#__codelineno-22-48"></a>        <span class="n">run_time</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">quantum</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">remaining_time</span><span class="p">)</span>
+<a id="__codelineno-22-49" name="__codelineno-22-49" href="#__codelineno-22-49"></a>        <span class="n">timeline</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p</span><span class="o">.</span><span class="n">pid</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span> <span class="n">current_time</span> <span class="o">+</span> <span class="n">run_time</span><span class="p">))</span>
+<a id="__codelineno-22-50" name="__codelineno-22-50" href="#__codelineno-22-50"></a>        <span class="n">current_time</span> <span class="o">+=</span> <span class="n">run_time</span>
+<a id="__codelineno-22-51" name="__codelineno-22-51" href="#__codelineno-22-51"></a>        <span class="n">p</span><span class="o">.</span><span class="n">remaining_time</span> <span class="o">-=</span> <span class="n">run_time</span>
+<a id="__codelineno-22-52" name="__codelineno-22-52" href="#__codelineno-22-52"></a>
+<a id="__codelineno-22-53" name="__codelineno-22-53" href="#__codelineno-22-53"></a>        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">processes</span><span class="p">)</span> <span class="ow">and</span> <span class="n">processes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">arrival_time</span> <span class="o">&lt;=</span> <span class="n">current_time</span><span class="p">:</span>
+<a id="__codelineno-22-54" name="__codelineno-22-54" href="#__codelineno-22-54"></a>            <span class="n">ready_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<a id="__codelineno-22-55" name="__codelineno-22-55" href="#__codelineno-22-55"></a>            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-22-56" name="__codelineno-22-56" href="#__codelineno-22-56"></a>
+<a id="__codelineno-22-57" name="__codelineno-22-57" href="#__codelineno-22-57"></a>        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">remaining_time</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-22-58" name="__codelineno-22-58" href="#__codelineno-22-58"></a>            <span class="n">ready_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+<a id="__codelineno-22-59" name="__codelineno-22-59" href="#__codelineno-22-59"></a>
+<a id="__codelineno-22-60" name="__codelineno-22-60" href="#__codelineno-22-60"></a>    <span class="k">return</span> <span class="n">timeline</span>
+<a id="__codelineno-22-61" name="__codelineno-22-61" href="#__codelineno-22-61"></a>
+<a id="__codelineno-22-62" name="__codelineno-22-62" href="#__codelineno-22-62"></a><span class="k">def</span><span class="w"> </span><span class="nf">cfs</span><span class="p">(</span><span class="n">processes</span><span class="p">,</span> <span class="n">target_latency</span><span class="o">=</span><span class="mi">6</span><span class="p">):</span>
+<a id="__codelineno-22-63" name="__codelineno-22-63" href="#__codelineno-22-63"></a><span class="w">    </span><span class="sd">"""CFS 模拟（简化版）"""</span>
+<a id="__codelineno-22-64" name="__codelineno-22-64" href="#__codelineno-22-64"></a>    <span class="n">processes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">processes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">arrival_time</span><span class="p">)</span>
+<a id="__codelineno-22-65" name="__codelineno-22-65" href="#__codelineno-22-65"></a>    <span class="n">ready</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-22-66" name="__codelineno-22-66" href="#__codelineno-22-66"></a>    <span class="n">timeline</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-22-67" name="__codelineno-22-67" href="#__codelineno-22-67"></a>    <span class="n">current_time</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-68" name="__codelineno-22-68" href="#__codelineno-22-68"></a>    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-22-69" name="__codelineno-22-69" href="#__codelineno-22-69"></a>
+<a id="__codelineno-22-70" name="__codelineno-22-70" href="#__codelineno-22-70"></a>    <span class="k">while</span> <span class="n">ready</span> <span class="ow">or</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">processes</span><span class="p">):</span>
+<a id="__codelineno-22-71" name="__codelineno-22-71" href="#__codelineno-22-71"></a>        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">processes</span><span class="p">)</span> <span class="ow">and</span> <span class="n">processes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">arrival_time</span> <span class="o">&lt;=</span> <span class="n">current_time</span><span class="p">:</span>
+<a id="__codelineno-22-72" name="__codelineno-22-72" href="#__codelineno-22-72"></a>            <span class="n">heapq</span><span class="o">.</span><span class="n">heappush</span><span class="p">(</span><span class="n">ready</span><span class="p">,</span> <span class="p">(</span><span class="n">processes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">vruntime</span><span class="p">,</span> <span class="n">processes</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+<a id="__codelineno-22-73" name="__codelineno-22-73" href="#__codelineno-22-73"></a>            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-22-74" name="__codelineno-22-74" href="#__codelineno-22-74"></a>
+<a id="__codelineno-22-75" name="__codelineno-22-75" href="#__codelineno-22-75"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">ready</span><span class="p">:</span>
+<a id="__codelineno-22-76" name="__codelineno-22-76" href="#__codelineno-22-76"></a>            <span class="n">current_time</span> <span class="o">=</span> <span class="n">processes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">arrival_time</span>
+<a id="__codelineno-22-77" name="__codelineno-22-77" href="#__codelineno-22-77"></a>            <span class="k">continue</span>
+<a id="__codelineno-22-78" name="__codelineno-22-78" href="#__codelineno-22-78"></a>
+<a id="__codelineno-22-79" name="__codelineno-22-79" href="#__codelineno-22-79"></a>        <span class="n">_</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">heapq</span><span class="o">.</span><span class="n">heappop</span><span class="p">(</span><span class="n">ready</span><span class="p">)</span>
+<a id="__codelineno-22-80" name="__codelineno-22-80" href="#__codelineno-22-80"></a>        <span class="n">nr_running</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ready</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+<a id="__codelineno-22-81" name="__codelineno-22-81" href="#__codelineno-22-81"></a>        <span class="n">quantum</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">target_latency</span> <span class="o">//</span> <span class="n">nr_running</span><span class="p">)</span>
+<a id="__codelineno-22-82" name="__codelineno-22-82" href="#__codelineno-22-82"></a>        <span class="n">run_time</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">quantum</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">remaining_time</span><span class="p">)</span>
+<a id="__codelineno-22-83" name="__codelineno-22-83" href="#__codelineno-22-83"></a>        <span class="n">timeline</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p</span><span class="o">.</span><span class="n">pid</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span> <span class="n">current_time</span> <span class="o">+</span> <span class="n">run_time</span><span class="p">))</span>
+<a id="__codelineno-22-84" name="__codelineno-22-84" href="#__codelineno-22-84"></a>        <span class="n">current_time</span> <span class="o">+=</span> <span class="n">run_time</span>
+<a id="__codelineno-22-85" name="__codelineno-22-85" href="#__codelineno-22-85"></a>        <span class="n">p</span><span class="o">.</span><span class="n">remaining_time</span> <span class="o">-=</span> <span class="n">run_time</span>
+<a id="__codelineno-22-86" name="__codelineno-22-86" href="#__codelineno-22-86"></a>        <span class="n">p</span><span class="o">.</span><span class="n">vruntime</span> <span class="o">+=</span> <span class="n">run_time</span>  <span class="c1"># 简化：不考虑优先级缩放</span>
+<a id="__codelineno-22-87" name="__codelineno-22-87" href="#__codelineno-22-87"></a>
+<a id="__codelineno-22-88" name="__codelineno-22-88" href="#__codelineno-22-88"></a>        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">processes</span><span class="p">)</span> <span class="ow">and</span> <span class="n">processes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">arrival_time</span> <span class="o">&lt;=</span> <span class="n">current_time</span><span class="p">:</span>
+<a id="__codelineno-22-89" name="__codelineno-22-89" href="#__codelineno-22-89"></a>            <span class="n">heapq</span><span class="o">.</span><span class="n">heappush</span><span class="p">(</span><span class="n">ready</span><span class="p">,</span> <span class="p">(</span><span class="n">processes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">vruntime</span><span class="p">,</span> <span class="n">processes</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+<a id="__codelineno-22-90" name="__codelineno-22-90" href="#__codelineno-22-90"></a>            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-22-91" name="__codelineno-22-91" href="#__codelineno-22-91"></a>
+<a id="__codelineno-22-92" name="__codelineno-22-92" href="#__codelineno-22-92"></a>        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">remaining_time</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-22-93" name="__codelineno-22-93" href="#__codelineno-22-93"></a>            <span class="n">heapq</span><span class="o">.</span><span class="n">heappush</span><span class="p">(</span><span class="n">ready</span><span class="p">,</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">vruntime</span><span class="p">,</span> <span class="n">p</span><span class="p">))</span>
+<a id="__codelineno-22-94" name="__codelineno-22-94" href="#__codelineno-22-94"></a>
+<a id="__codelineno-22-95" name="__codelineno-22-95" href="#__codelineno-22-95"></a>    <span class="k">return</span> <span class="n">timeline</span>
+<a id="__codelineno-22-96" name="__codelineno-22-96" href="#__codelineno-22-96"></a>
+<a id="__codelineno-22-97" name="__codelineno-22-97" href="#__codelineno-22-97"></a><span class="c1"># 测试</span>
+<a id="__codelineno-22-98" name="__codelineno-22-98" href="#__codelineno-22-98"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+<a id="__codelineno-22-99" name="__codelineno-22-99" href="#__codelineno-22-99"></a>    <span class="n">procs</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-22-100" name="__codelineno-22-100" href="#__codelineno-22-100"></a>        <span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">arrival_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">burst_time</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span>
+<a id="__codelineno-22-101" name="__codelineno-22-101" href="#__codelineno-22-101"></a>        <span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">arrival_time</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">burst_time</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+<a id="__codelineno-22-102" name="__codelineno-22-102" href="#__codelineno-22-102"></a>        <span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">arrival_time</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">burst_time</span><span class="o">=</span><span class="mi">8</span><span class="p">),</span>
+<a id="__codelineno-22-103" name="__codelineno-22-103" href="#__codelineno-22-103"></a>        <span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">arrival_time</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">burst_time</span><span class="o">=</span><span class="mi">6</span><span class="p">),</span>
+<a id="__codelineno-22-104" name="__codelineno-22-104" href="#__codelineno-22-104"></a>    <span class="p">]</span>
+<a id="__codelineno-22-105" name="__codelineno-22-105" href="#__codelineno-22-105"></a>
+<a id="__codelineno-22-106" name="__codelineno-22-106" href="#__codelineno-22-106"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"FCFS:"</span><span class="p">,</span> <span class="n">fcfs</span><span class="p">([</span><span class="n">Process</span><span class="p">(</span><span class="o">**</span><span class="n">p</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">]))</span>
+<a id="__codelineno-22-107" name="__codelineno-22-107" href="#__codelineno-22-107"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"RR:  "</span><span class="p">,</span> <span class="n">round_robin</span><span class="p">([</span><span class="n">Process</span><span class="p">(</span><span class="o">**</span><span class="n">p</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">]))</span>
+<a id="__codelineno-22-108" name="__codelineno-22-108" href="#__codelineno-22-108"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"CFS: "</span><span class="p">,</span> <span class="n">cfs</span><span class="p">([</span><span class="n">Process</span><span class="p">(</span><span class="o">**</span><span class="n">p</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">]))</span>
+</code></pre></div>
+<h3 id="2c">实验2：C 上下文切换<a class="headerlink" href="#2c" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1">// src/mini-kernel/context_switch.c</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;ucontext.h&gt;</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdlib.h&gt;</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="cp">#define STACK_SIZE 16384</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="n">ucontext_t</span><span class="w"> </span><span class="n">main_ctx</span><span class="p">,</span><span class="w"> </span><span class="n">ctx_a</span><span class="p">,</span><span class="w"> </span><span class="n">ctx_b</span><span class="p">;</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="kt">void</span><span class="w"> </span><span class="nf">func_a</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">"Process A: step %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">);</span>
+<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a><span class="w">        </span><span class="n">swapcontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx_a</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ctx_b</span><span class="p">);</span><span class="w">  </span><span class="c1">// 切换到 B</span>
+<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"Process A: done</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a><span class="w">    </span><span class="n">swapcontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx_a</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">main_ctx</span><span class="p">);</span><span class="w">   </span><span class="c1">// 切回 main</span>
+<a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a><span class="p">}</span>
+<a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a>
+<a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a><span class="kt">void</span><span class="w"> </span><span class="nf">func_b</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-20" name="__codelineno-23-20" href="#__codelineno-23-20"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-21" name="__codelineno-23-21" href="#__codelineno-23-21"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">"Process B: step %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">);</span>
+<a id="__codelineno-23-22" name="__codelineno-23-22" href="#__codelineno-23-22"></a><span class="w">        </span><span class="n">swapcontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx_b</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ctx_a</span><span class="p">);</span><span class="w">  </span><span class="c1">// 切换到 A</span>
+<a id="__codelineno-23-23" name="__codelineno-23-23" href="#__codelineno-23-23"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-23-24" name="__codelineno-23-24" href="#__codelineno-23-24"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"Process B: done</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<a id="__codelineno-23-25" name="__codelineno-23-25" href="#__codelineno-23-25"></a><span class="w">    </span><span class="n">swapcontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx_b</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">main_ctx</span><span class="p">);</span><span class="w">   </span><span class="c1">// 切回 main</span>
+<a id="__codelineno-23-26" name="__codelineno-23-26" href="#__codelineno-23-26"></a><span class="p">}</span>
+<a id="__codelineno-23-27" name="__codelineno-23-27" href="#__codelineno-23-27"></a>
+<a id="__codelineno-23-28" name="__codelineno-23-28" href="#__codelineno-23-28"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-29" name="__codelineno-23-29" href="#__codelineno-23-29"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">stack_a</span><span class="p">[</span><span class="n">STACK_SIZE</span><span class="p">];</span>
+<a id="__codelineno-23-30" name="__codelineno-23-30" href="#__codelineno-23-30"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">stack_b</span><span class="p">[</span><span class="n">STACK_SIZE</span><span class="p">];</span>
+<a id="__codelineno-23-31" name="__codelineno-23-31" href="#__codelineno-23-31"></a>
+<a id="__codelineno-23-32" name="__codelineno-23-32" href="#__codelineno-23-32"></a><span class="w">    </span><span class="c1">// 初始化上下文 A</span>
+<a id="__codelineno-23-33" name="__codelineno-23-33" href="#__codelineno-23-33"></a><span class="w">    </span><span class="n">getcontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx_a</span><span class="p">);</span>
+<a id="__codelineno-23-34" name="__codelineno-23-34" href="#__codelineno-23-34"></a><span class="w">    </span><span class="n">ctx_a</span><span class="p">.</span><span class="n">uc_stack</span><span class="p">.</span><span class="n">ss_sp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stack_a</span><span class="p">;</span>
+<a id="__codelineno-23-35" name="__codelineno-23-35" href="#__codelineno-23-35"></a><span class="w">    </span><span class="n">ctx_a</span><span class="p">.</span><span class="n">uc_stack</span><span class="p">.</span><span class="n">ss_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">STACK_SIZE</span><span class="p">;</span>
+<a id="__codelineno-23-36" name="__codelineno-23-36" href="#__codelineno-23-36"></a><span class="w">    </span><span class="n">ctx_a</span><span class="p">.</span><span class="n">uc_link</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">main_ctx</span><span class="p">;</span>
+<a id="__codelineno-23-37" name="__codelineno-23-37" href="#__codelineno-23-37"></a><span class="w">    </span><span class="n">makecontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx_a</span><span class="p">,</span><span class="w"> </span><span class="n">func_a</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-23-38" name="__codelineno-23-38" href="#__codelineno-23-38"></a>
+<a id="__codelineno-23-39" name="__codelineno-23-39" href="#__codelineno-23-39"></a><span class="w">    </span><span class="c1">// 初始化上下文 B</span>
+<a id="__codelineno-23-40" name="__codelineno-23-40" href="#__codelineno-23-40"></a><span class="w">    </span><span class="n">getcontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx_b</span><span class="p">);</span>
+<a id="__codelineno-23-41" name="__codelineno-23-41" href="#__codelineno-23-41"></a><span class="w">    </span><span class="n">ctx_b</span><span class="p">.</span><span class="n">uc_stack</span><span class="p">.</span><span class="n">ss_sp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stack_b</span><span class="p">;</span>
+<a id="__codelineno-23-42" name="__codelineno-23-42" href="#__codelineno-23-42"></a><span class="w">    </span><span class="n">ctx_b</span><span class="p">.</span><span class="n">uc_stack</span><span class="p">.</span><span class="n">ss_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">STACK_SIZE</span><span class="p">;</span>
+<a id="__codelineno-23-43" name="__codelineno-23-43" href="#__codelineno-23-43"></a><span class="w">    </span><span class="n">ctx_b</span><span class="p">.</span><span class="n">uc_link</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">main_ctx</span><span class="p">;</span>
+<a id="__codelineno-23-44" name="__codelineno-23-44" href="#__codelineno-23-44"></a><span class="w">    </span><span class="n">makecontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx_b</span><span class="p">,</span><span class="w"> </span><span class="n">func_b</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-23-45" name="__codelineno-23-45" href="#__codelineno-23-45"></a>
+<a id="__codelineno-23-46" name="__codelineno-23-46" href="#__codelineno-23-46"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"=== Start scheduling ===</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<a id="__codelineno-23-47" name="__codelineno-23-47" href="#__codelineno-23-47"></a><span class="w">    </span><span class="n">swapcontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">main_ctx</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ctx_a</span><span class="p">);</span><span class="w">  </span><span class="c1">// 启动 A</span>
+<a id="__codelineno-23-48" name="__codelineno-23-48" href="#__codelineno-23-48"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"=== All processes done ===</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<a id="__codelineno-23-49" name="__codelineno-23-49" href="#__codelineno-23-49"></a>
+<a id="__codelineno-23-50" name="__codelineno-23-50" href="#__codelineno-23-50"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-23-51" name="__codelineno-23-51" href="#__codelineno-23-51"></a><span class="p">}</span>
+</code></pre></div>
+<p>编译运行：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>gcc<span class="w"> </span>context_switch.c<span class="w"> </span>-o<span class="w"> </span>context_switch<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./context_switch
+</code></pre></div></p>
+<h3 id="_2">进阶实验<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>在 Python 模拟器中添加优先级缩放（nice 值 → weight → vruntime 增长率）</li>
+<li>实现多核负载均衡模拟</li>
+<li>添加 I/O 等待模拟（进程在 I/O 时进入 TASK_INTERRUPTIBLE，完成后回到运行队列）</li>
+</ul>
+<hr />
+<h2 id="_3">参考资源<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Linux 源码 <code>kernel/sched/</code> — 调度器实现</li>
+<li>Linux 源码 <code>include/linux/sched.h</code> — task_struct 定义</li>
+<li><em>Understanding the Linux Kernel</em> Ch.3 — 进程调度</li>
+<li><em>Linux Kernel Development</em> Ch.4 — 进程管理</li>
+<li>CFS 论文：https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.rst</li>
+<li>EEVDF 论文：https://en.wikipedia.org/wiki/Earliest_eligible_virtual_deadline_first</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

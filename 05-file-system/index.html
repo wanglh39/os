@@ -1,0 +1,2283 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="系统性学习操作系统底层原理与设计哲学">
+      
+      
+        <meta name="author" content="wanglh39">
+      
+      
+      
+        <link rel="prev" href="../04-virtual-memory/">
+      
+      
+        <link rel="next" href="../06-io-device/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>文件系统 - OS Learning Journey</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#05-" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="OS Learning Journey" class="md-header__button md-logo" aria-label="OS Learning Journey" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OS Learning Journey
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              文件系统
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/wanglh39/os" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wanglh39/os
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../00-design-philosophy/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  设计哲学总论
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../01-boot-and-init/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  启动与初始化
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../02-process-scheduling/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  进程与调度
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../03-memory-management/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  内存管理
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../04-virtual-memory/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  虚拟内存
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  文件系统
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../06-io-device/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  I/O 与设备驱动
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../07-syscall-kernel/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  系统调用
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../08-concurrency-sync/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  并发与同步
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OS Learning Journey" class="md-nav__button md-logo" aria-label="OS Learning Journey" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    OS Learning Journey
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/wanglh39/os" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wanglh39/os
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-design-philosophy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    设计哲学总论
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-boot-and-init/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    启动与初始化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-process-scheduling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    进程与调度
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-memory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    内存管理
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-virtual-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    虚拟内存
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    文件系统
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    文件系统
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        一、Design Philosophy：文件系统在解决什么问题？
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="一、Design Philosophy：文件系统在解决什么问题？">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 核心问题
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 "一切皆文件"的设计哲学
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#historical-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        二、Historical Evolution：文件系统的演进
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="二、Historical Evolution：文件系统的演进">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 早期文件系统
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-unix-ufs-1970s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Unix 文件系统（UFS, 1970s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-ext2-linux-1993" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 ext2 — Linux 的经典文件系统（1993）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-ext3ext4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 ext3/ext4 — 日志文件系统
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 其他重要文件系统
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-mechanismvfs-inode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        三、Core Mechanism：VFS 与 inode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="三、Core Mechanism：VFS 与 inode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-vfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 VFS — 虚拟文件系统
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-vfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 VFS 的四大核心对象
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-inode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 inode 的操作函数表
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-ext4-inode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 ext4 的 inode 与数据寻址
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-page-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 页缓存（Page Cache）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        四、Trade-offs：文件系统的关键权衡
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="四、Trade-offs：文件系统的关键权衡">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 日志策略
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 分配策略
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-vs-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 缓存 vs 直接 I/O
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-analysislinux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        五、Real-world Analysis：Linux 文件系统源码
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="五、Real-world Analysis：Linux 文件系统源码">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-open" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 open() 的完整调用链
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-read" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 read() 的完整调用链
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-dentry-dcache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 dentry 缓存（DCache）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hands-on-lablab05-vfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        六、Hands-on Lab：lab05-vfs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="六、Hands-on Lab：lab05-vfs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1python-vfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验1：Python 模拟 VFS 层次结构
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2c-inode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验2：C 实现简单 inode 文件系统
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        进阶实验
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考资源
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-io-device/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    I/O 与设备驱动
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-syscall-kernel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    系统调用
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-concurrency-sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    并发与同步
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        一、Design Philosophy：文件系统在解决什么问题？
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="一、Design Philosophy：文件系统在解决什么问题？">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 核心问题
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 "一切皆文件"的设计哲学
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#historical-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        二、Historical Evolution：文件系统的演进
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="二、Historical Evolution：文件系统的演进">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 早期文件系统
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-unix-ufs-1970s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Unix 文件系统（UFS, 1970s）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-ext2-linux-1993" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 ext2 — Linux 的经典文件系统（1993）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-ext3ext4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 ext3/ext4 — 日志文件系统
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 其他重要文件系统
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-mechanismvfs-inode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        三、Core Mechanism：VFS 与 inode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="三、Core Mechanism：VFS 与 inode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-vfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 VFS — 虚拟文件系统
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-vfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 VFS 的四大核心对象
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-inode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 inode 的操作函数表
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-ext4-inode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 ext4 的 inode 与数据寻址
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-page-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 页缓存（Page Cache）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        四、Trade-offs：文件系统的关键权衡
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="四、Trade-offs：文件系统的关键权衡">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 日志策略
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 分配策略
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-vs-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 缓存 vs 直接 I/O
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-analysislinux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        五、Real-world Analysis：Linux 文件系统源码
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="五、Real-world Analysis：Linux 文件系统源码">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-open" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 open() 的完整调用链
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-read" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 read() 的完整调用链
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-dentry-dcache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 dentry 缓存（DCache）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hands-on-lablab05-vfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        六、Hands-on Lab：lab05-vfs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="六、Hands-on Lab：lab05-vfs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1python-vfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验1：Python 模拟 VFS 层次结构
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2c-inode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实验2：C 实现简单 inode 文件系统
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        进阶实验
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考资源
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="05-">05 - 文件系统<a class="headerlink" href="#05-" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>"Everything is a file." — Unix philosophy</p>
+</blockquote>
+<hr />
+<h2 id="design-philosophy">一、Design Philosophy：文件系统在解决什么问题？<a class="headerlink" href="#design-philosophy" title="Permanent link">&para;</a></h2>
+<h3 id="11">1.1 核心问题<a class="headerlink" href="#11" title="Permanent link">&para;</a></h3>
+<p>磁盘/SSD 提供的是<strong>块设备</strong>接口——读写固定大小的数据块（通常 512 字节或 4KB）。但用户和应用程序需要的是：</p>
+<ol>
+<li><strong>命名</strong>：用名字而不是块号来访问数据</li>
+<li><strong>组织</strong>：把相关数据组织在一起（文件）</li>
+<li><strong>层次</strong>：用目录层次组织文件</li>
+<li><strong>保护</strong>：控制谁可以读写哪些文件</li>
+<li><strong>持久</strong>：数据在断电后仍然存在</li>
+<li><strong>并发</strong>：多个进程可以同时访问文件</li>
+</ol>
+<p><strong>文件系统的本质：在块设备之上建立"文件"和"目录"的抽象，让用户不需要关心数据存储在哪个物理块。</strong></p>
+<h3 id="12">1.2 "一切皆文件"的设计哲学<a class="headerlink" href="#12" title="Permanent link">&para;</a></h3>
+<p>Unix 的核心设计原则之一：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>普通文件    → open/read/write/close
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>设备        → open/read/write/close（同一套接口！）
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>管道        → open/read/write/close
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>网络 socket → 虽然有专门 API，但仍有 fd
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>procfs      → open/read/write/close
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>sysfs       → open/read/write/close
+</code></pre></div>
+<p><strong>为什么"一切皆文件"是好设计？</strong></p>
+<ol>
+<li><strong>统一接口</strong>：学会一套 API 就能操作所有资源</li>
+<li><strong>可组合</strong>：管道 <code>|</code> 把一个程序的输出连接到另一个程序的输入</li>
+<li><strong>工具复用</strong>：<code>cat</code>、<code>grep</code>、<code>wc</code> 可以用于任何"文件"——设备、管道、procfs</li>
+<li><strong>权限统一</strong>：文件权限模型适用于所有资源</li>
+</ol>
+<p><strong>但"一切皆文件"也有泄漏</strong>：
+- <code>seek()</code> 对管道和 socket 无意义
+- <code>mmap()</code> 对字符设备无意义
+- 网络 socket 需要 <code>send()</code>/<code>recv()</code> 而不是 <code>read()</code>/<code>write()</code></p>
+<p><strong>Linux 的态度：统一接口作为默认范式，允许例外存在。</strong></p>
+<hr />
+<h2 id="historical-evolution">二、Historical Evolution：文件系统的演进<a class="headerlink" href="#historical-evolution" title="Permanent link">&para;</a></h2>
+<h3 id="21">2.1 早期文件系统<a class="headerlink" href="#21" title="Permanent link">&para;</a></h3>
+<p>最早的文件系统非常简单：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>磁盘布局：
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>┌──────────┬──────────┬──────────┐
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│ Superblock │ Inode表   │ 数据块    │
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│ (1块)      │ (N块)     │ (剩余)    │
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>└──────────┴──────────┴──────────┘
+</code></pre></div>
+<p>问题：没有目录——所有文件在同一层级。</p>
+<h3 id="22-unix-ufs-1970s">2.2 Unix 文件系统（UFS, 1970s）<a class="headerlink" href="#22-unix-ufs-1970s" title="Permanent link">&para;</a></h3>
+<p>Unix 引入了几个革命性的设计：</p>
+<ol>
+<li><strong>inode</strong>：每个文件有一个 inode（索引节点），存储文件的所有元数据</li>
+<li><strong>目录</strong>：目录是特殊的文件，内容是文件名→inode号的映射</li>
+<li><strong>层次结构</strong>：目录可以嵌套，形成树形结构</li>
+<li><strong>硬链接</strong>：多个文件名可以指向同一个 inode</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>目录文件的内容：
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>┌─────────────┬────────┐
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>│ 文件名       │ inode号 │
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>├─────────────┼────────┤
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>│ "hello.c"    │ 42     │
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>│ "Makefile"   │ 43     │
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>│ "src"        │ 44     │ ← src 是子目录
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>└─────────────┴────────┘
+</code></pre></div>
+<h3 id="23-ext2-linux-1993">2.3 ext2 — Linux 的经典文件系统（1993）<a class="headerlink" href="#23-ext2-linux-1993" title="Permanent link">&para;</a></h3>
+<p>ext2 是 Linux 早期最广泛使用的文件系统，奠定了 ext 系列的基础：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>磁盘布局（Block Group）：
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>┌─────────────────────────────────────────────────┐
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>│ Block Group 0                                    │
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>│ ┌─────────┬──────────┬──────────┬──────────┬───┐│
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>│ │Superblk │ Block Grp│ Block    │ Inode    │Data││
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>│ │         │ Desc     │ Bitmap   │ Bitmap   │    ││
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>│ └─────────┴──────────┴──────────┴──────────┴───┘│
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>├─────────────────────────────────────────────────┤
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>│ Block Group 1                                    │
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>│ ...                                              │
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>└─────────────────────────────────────────────────┘
+</code></pre></div>
+<p><strong>Block Group 的设计哲学：把相关的元数据和数据放在一起——减少磁盘寻道距离。</strong></p>
+<h3 id="24-ext3ext4">2.4 ext3/ext4 — 日志文件系统<a class="headerlink" href="#24-ext3ext4" title="Permanent link">&para;</a></h3>
+<p>ext2 的问题：断电后文件系统可能不一致（元数据更新到一半）。</p>
+<p>ext3 的解决方案：<strong>日志（Journal）</strong>——把元数据修改先写入日志区，然后再修改实际数据。</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>1. 开始事务 → 写日志区："我要修改 inode 42"
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>2. 修改实际 inode 42
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>3. 提交事务 → 写日志区："事务完成"
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>如果断电：
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>- 日志有"开始"但没有"提交" → 回滚（撤销修改）
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>- 日志有"提交" → 重做（确保修改完成）
+</code></pre></div>
+<p>ext4 的关键改进：
+- <strong>Extent</strong> 替代间接块——大文件不需要多级间接寻址
+- <strong>延迟分配</strong>——写入时不立即分配块，积累后批量分配
+- <strong>多块分配</strong>——一次分配多个连续块
+- <strong>校验和</strong>——检测数据损坏</p>
+<h3 id="25">2.5 其他重要文件系统<a class="headerlink" href="#25" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>FS</th>
+<th>设计重点</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>XFS</td>
+<td>高性能、大文件、并行 I/O</td>
+<td>大型服务器、数据库</td>
+</tr>
+<tr>
+<td>Btrfs</td>
+<td>Copy-on-Write、快照、校验</td>
+<td>数据完整性要求高</td>
+</tr>
+<tr>
+<td>ZFS</td>
+<td>端到端校验、快照、池化</td>
+<td>存储服务器（非 Linux 原生）</td>
+</tr>
+<tr>
+<td>F2FS</td>
+<td>闪存友好（日志结构）</td>
+<td>SSD、手机</td>
+</tr>
+<tr>
+<td>NFS</td>
+<td>网络透明访问</td>
+<td>分布式环境</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="core-mechanismvfs-inode">三、Core Mechanism：VFS 与 inode<a class="headerlink" href="#core-mechanismvfs-inode" title="Permanent link">&para;</a></h2>
+<h3 id="31-vfs">3.1 VFS — 虚拟文件系统<a class="headerlink" href="#31-vfs" title="Permanent link">&para;</a></h3>
+<p>VFS（Virtual File System）是 Linux 文件系统的核心抽象层：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>应用程序
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  │
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  ↓
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>┌─────────────────────────────────────────┐
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>│  VFS (Virtual File System)              │ ← 统一接口
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>│  - open(), read(), write(), close()     │
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>│  - 统一的 inode/dentry/file 抽象        │
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>├─────────────────────────────────────────┤
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>│  ext4 │ XFS │ Btrfs │ NFS │ procfs │... │ ← 具体文件系统
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>├─────────────────────────────────────────┤
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>│  Block Device Layer                     │ ← 块设备层
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>│  - 磁盘、SSD、RAID、LVM                 │
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>└─────────────────────────────────────────┘
+</code></pre></div>
+<p>VFS 的核心思想：<strong>定义一组通用接口，每个具体文件系统实现这些接口。</strong> 上层代码不需要知道底层是 ext4 还是 NFS。</p>
+<h3 id="32-vfs">3.2 VFS 的四大核心对象<a class="headerlink" href="#32-vfs" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">// 1. superblock — 文件系统实例</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">super_block</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="kt">dev_t</span><span class="w"> </span><span class="n">s_dev</span><span class="p">;</span><span class="w">                    </span><span class="c1">// 设备号</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">s_blocksize</span><span class="p">;</span><span class="w">      </span><span class="c1">// 块大小</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">s_flags</span><span class="p">;</span><span class="w">          </span><span class="c1">// 挂载标志</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">file_system_type</span><span class="w"> </span><span class="o">*</span><span class="n">s_type</span><span class="p">;</span><span class="w"> </span><span class="c1">// 文件系统类型</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">super_operations</span><span class="w"> </span><span class="o">*</span><span class="n">s_op</span><span class="p">;</span><span class="w"> </span><span class="c1">// 操作函数表</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="n">s_root</span><span class="p">;</span><span class="w">          </span><span class="c1">// 根目录</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="p">};</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="c1">// 2. inode — 文件/目录的元数据</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">    </span><span class="n">umode_t</span><span class="w"> </span><span class="n">i_mode</span><span class="p">;</span><span class="w">                 </span><span class="c1">// 文件类型和权限</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">i_ino</span><span class="p">;</span><span class="w">            </span><span class="c1">// inode 号</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">    </span><span class="kt">uid_t</span><span class="w"> </span><span class="n">i_uid</span><span class="p">;</span><span class="w">                    </span><span class="c1">// 所有者</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">    </span><span class="kt">gid_t</span><span class="w"> </span><span class="n">i_gid</span><span class="p">;</span><span class="w">                    </span><span class="c1">// 所属组</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">    </span><span class="n">loff_t</span><span class="w"> </span><span class="n">i_size</span><span class="p">;</span><span class="w">                  </span><span class="c1">// 文件大小</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">timespec</span><span class="w"> </span><span class="n">i_atime</span><span class="p">;</span><span class="w">        </span><span class="c1">// 最后访问时间</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">timespec</span><span class="w"> </span><span class="n">i_mtime</span><span class="p">;</span><span class="w">        </span><span class="c1">// 最后修改时间</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">timespec</span><span class="w"> </span><span class="n">i_ctime</span><span class="p">;</span><span class="w">        </span><span class="c1">// 最后状态改变时间</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">inode_operations</span><span class="w"> </span><span class="o">*</span><span class="n">i_op</span><span class="p">;</span><span class="w"> </span><span class="c1">// inode 操作</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">file_operations</span><span class="w"> </span><span class="o">*</span><span class="n">i_fop</span><span class="p">;</span><span class="w"> </span><span class="c1">// 文件操作</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">address_space</span><span class="w"> </span><span class="o">*</span><span class="n">i_mapping</span><span class="p">;</span><span class="w"> </span><span class="c1">// 页缓存</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="p">};</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="c1">// 3. dentry — 目录项（路径分量）</span>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">qstr</span><span class="w"> </span><span class="n">d_name</span><span class="p">;</span><span class="w">             </span><span class="c1">// 名称</span>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="n">d_inode</span><span class="p">;</span><span class="w">          </span><span class="c1">// 关联的 inode</span>
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="n">d_parent</span><span class="p">;</span><span class="w">        </span><span class="c1">// 父目录</span>
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">list_head</span><span class="w"> </span><span class="n">d_subdirs</span><span class="p">;</span><span class="w">     </span><span class="c1">// 子目录链表</span>
+<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry_operations</span><span class="w"> </span><span class="o">*</span><span class="n">d_op</span><span class="p">;</span>
+<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a><span class="p">};</span>
+<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a>
+<a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a><span class="c1">// 4. file — 打开的文件实例</span>
+<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">path</span><span class="w"> </span><span class="n">f_path</span><span class="p">;</span><span class="w">             </span><span class="c1">// 路径（dentry + vfsmount）</span>
+<a id="__codelineno-6-41" name="__codelineno-6-41" href="#__codelineno-6-41"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">file_operations</span><span class="w"> </span><span class="o">*</span><span class="n">f_op</span><span class="p">;</span><span class="w"> </span><span class="c1">// 操作函数表</span>
+<a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">f_flags</span><span class="p">;</span><span class="w">           </span><span class="c1">// 打开标志（O_RDONLY 等）</span>
+<a id="__codelineno-6-43" name="__codelineno-6-43" href="#__codelineno-6-43"></a><span class="w">    </span><span class="n">loff_t</span><span class="w"> </span><span class="n">f_pos</span><span class="p">;</span><span class="w">                   </span><span class="c1">// 当前读写位置</span>
+<a id="__codelineno-6-44" name="__codelineno-6-44" href="#__codelineno-6-44"></a><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">private_data</span><span class="p">;</span><span class="w">             </span><span class="c1">// 私有数据</span>
+<a id="__codelineno-6-45" name="__codelineno-6-45" href="#__codelineno-6-45"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-6-46" name="__codelineno-6-46" href="#__codelineno-6-46"></a><span class="p">};</span>
+</code></pre></div>
+<p><strong>四个对象的关系</strong>：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>路径 "/home/user/file.txt" 的解析过程：
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>1. 从根 dentry (/) 开始
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>2. 查找子目录 "home" → 得到 dentry(home)
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>3. 查找子目录 "user" → 得到 dentry(user)
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>4. 查找文件 "file.txt" → 得到 dentry(file.txt)
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>5. dentry(file.txt) → inode → file（打开后）
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>superblock ←→ inode ←→ dentry ←→ file
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>  (文件系统)  (文件元数据) (路径分量) (打开实例)
+</code></pre></div>
+<p><strong>设计哲学：分离"文件是什么"（inode）和"文件叫什么"（dentry）——同一个 inode 可以有多个名字（硬链接）。</strong></p>
+<h3 id="33-inode">3.3 inode 的操作函数表<a class="headerlink" href="#33-inode" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">inode_operations</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">create</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="n">umode_t</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="p">);</span><span class="w">  </span><span class="c1">// 创建文件</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">lookup</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="p">);</span><span class="w"> </span><span class="c1">// 查找</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">link</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="p">);</span><span class="w">  </span><span class="c1">// 硬链接</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">unlink</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="p">);</span><span class="w">                 </span><span class="c1">// 删除</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">mkdir</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="n">umode_t</span><span class="p">);</span><span class="w">         </span><span class="c1">// 创建目录</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">rmdir</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="p">);</span><span class="w">                  </span><span class="c1">// 删除目录</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">rename</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="p">);</span><span class="w"> </span><span class="c1">// 重命名</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">setattr</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">iattr</span><span class="w"> </span><span class="o">*</span><span class="p">);</span><span class="w">                </span><span class="c1">// 修改属性</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">getattr</span><span class="p">)(</span><span class="k">const</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">path</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">kstat</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="n">u32</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="p">);</span><span class="w"> </span><span class="c1">// 获取属性</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="p">};</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="k">struct</span><span class="w"> </span><span class="nc">file_operations</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">    </span><span class="n">loff_t</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">llseek</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="n">loff_t</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="p">);</span><span class="w">                   </span><span class="c1">// seek</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">    </span><span class="kt">ssize_t</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">read</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">__user</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="p">,</span><span class="w"> </span><span class="n">loff_t</span><span class="w"> </span><span class="o">*</span><span class="p">);</span><span class="w"> </span><span class="c1">// read</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">    </span><span class="kt">ssize_t</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">write</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">__user</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="p">,</span><span class="w"> </span><span class="n">loff_t</span><span class="w"> </span><span class="o">*</span><span class="p">);</span><span class="w"> </span><span class="c1">// write</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">mmap</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">vm_area_struct</span><span class="w"> </span><span class="o">*</span><span class="p">);</span><span class="w">            </span><span class="c1">// mmap</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">open</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="p">);</span><span class="w">                     </span><span class="c1">// open</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">release</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="p">);</span><span class="w">                  </span><span class="c1">// close</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">fsync</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="n">loff_t</span><span class="p">,</span><span class="w"> </span><span class="n">loff_t</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="p">);</span><span class="w">               </span><span class="c1">// 同步</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="p">};</span>
+</code></pre></div>
+<p><strong>设计哲学：操作函数表是策略模式的内核实现——VFS 定义接口，具体 FS 提供实现。</strong> 这是 C 语言版本的面向对象多态。</p>
+<h3 id="34-ext4-inode">3.4 ext4 的 inode 与数据寻址<a class="headerlink" href="#34-ext4-inode" title="Permanent link">&para;</a></h3>
+<p>ext4 inode 的数据寻址使用 <strong>Extent</strong> 树：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">ext4_extent</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="n">__le32</span><span class="w"> </span><span class="n">ee_block</span><span class="p">;</span><span class="w">      </span><span class="c1">// 起始逻辑块号</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="n">__le16</span><span class="w"> </span><span class="n">ee_len</span><span class="p">;</span><span class="w">        </span><span class="c1">// 长度（连续块数）</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="n">__le16</span><span class="w"> </span><span class="n">ee_start_hi</span><span class="p">;</span><span class="w">   </span><span class="c1">// 物理块号高位</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="n">__le32</span><span class="w"> </span><span class="n">ee_start_lo</span><span class="p">;</span><span class="w">   </span><span class="c1">// 物理块号低位</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="p">};</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>文件大小 100MB，块大小 4KB：
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>ext2（间接块）：
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  inode → 12个直接块 → 1级间接 → 2级间接 → 3级间接
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>  12 × 4KB + 1024 × 4KB + ... → 需要多级间接寻址
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>ext4（Extent）：
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>  inode → Extent: [逻辑块0, 连续25600块, 物理块1000]
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>  → 一次寻址就找到了所有数据块！
+</code></pre></div>
+<p><strong>Extent 的设计哲学：用"范围"替代"逐块映射"——大多数文件的数据是连续的，用范围描述更高效。</strong></p>
+<h3 id="35-page-cache">3.5 页缓存（Page Cache）<a class="headerlink" href="#35-page-cache" title="Permanent link">&para;</a></h3>
+<p>文件 I/O 不直接读写磁盘——通过<strong>页缓存</strong>：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>read() 调用流程：
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>1. 检查页缓存中是否有请求的页
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>2. 如果有（缓存命中）→ 直接从内存返回数据
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>3. 如果没有（缓存未命中）→ 从磁盘读取到页缓存 → 返回数据
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>write() 调用流程：
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>1. 把数据写入页缓存
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>2. 标记页为 dirty
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>3. 异步写回磁盘（pdflush/kworker 线程）
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">address_space</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="n">host</span><span class="p">;</span><span class="w">              </span><span class="c1">// 所属 inode</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">xarray</span><span class="w"> </span><span class="n">i_pages</span><span class="p">;</span><span class="w">           </span><span class="c1">// 页缓存（页索引 → page）</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">rb_root_cached</span><span class="w"> </span><span class="n">i_mmap</span><span class="p">;</span><span class="w">    </span><span class="c1">// 反向映射（mmap 的 VMA）</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">address_space_operations</span><span class="w"> </span><span class="o">*</span><span class="n">a_ops</span><span class="p">;</span><span class="w"> </span><span class="c1">// 操作</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="p">};</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="k">struct</span><span class="w"> </span><span class="nc">address_space_operations</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">writepage</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">page</span><span class="w"> </span><span class="o">*</span><span class="n">page</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">writeback_control</span><span class="w"> </span><span class="o">*</span><span class="n">wbc</span><span class="p">);</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">readpage</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">page</span><span class="w"> </span><span class="o">*</span><span class="p">);</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">writepages</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">address_space</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">writeback_control</span><span class="w"> </span><span class="o">*</span><span class="p">);</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">set_page_dirty</span><span class="p">)(</span><span class="k">struct</span><span class="w"> </span><span class="nc">page</span><span class="w"> </span><span class="o">*</span><span class="p">);</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="p">};</span>
+</code></pre></div>
+<p><strong>页缓存的设计哲学：用内存作为磁盘的缓存——利用局部性原理，热数据在内存中，减少磁盘 I/O。</strong></p>
+<hr />
+<h2 id="trade-offs">四、Trade-offs：文件系统的关键权衡<a class="headerlink" href="#trade-offs" title="Permanent link">&para;</a></h2>
+<h3 id="41">4.1 日志策略<a class="headerlink" href="#41" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>日志内容</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Journal 模式</td>
+<td>元数据 + 数据</td>
+<td>最安全</td>
+<td>性能最差（所有数据写两次）</td>
+</tr>
+<tr>
+<td>Ordered 模式</td>
+<td>只日志元数据，数据先写</td>
+<td>安全且性能好（默认）</td>
+<td>数据可能旧但元数据一致</td>
+</tr>
+<tr>
+<td>Writeback 模式</td>
+<td>只日志元数据</td>
+<td>性能最好</td>
+<td>断电后数据可能不一致</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42">4.2 分配策略<a class="headerlink" href="#42" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>立即分配</td>
+<td>简单</td>
+<td>碎片化、性能差</td>
+</tr>
+<tr>
+<td>延迟分配</td>
+<td>减少碎片、批量优化</td>
+<td>内存需求大、延迟增加</td>
+</tr>
+</tbody>
+</table>
+<p><strong>ext4 的选择</strong>：延迟分配（delayed allocation）——写入时只写入页缓存，分配块时积累足够信息后批量分配，选择最优的物理块位置。</p>
+<h3 id="43-vs-io">4.3 缓存 vs 直接 I/O<a class="headerlink" href="#43-vs-io" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>页缓存</td>
+<td>自动缓存、预读优化</td>
+<td>内存占用、数据可能不一致</td>
+</tr>
+<tr>
+<td>直接 I/O (O_DIRECT)</td>
+<td>绕过缓存、低延迟</td>
+<td>无缓存优化、需要应用自己管理</td>
+</tr>
+</tbody>
+</table>
+<p><strong>数据库（如 PostgreSQL）通常使用 O_DIRECT</strong>——因为数据库有自己的缓存层，不需要内核页缓存的额外开销。</p>
+<hr />
+<h2 id="real-world-analysislinux">五、Real-world Analysis：Linux 文件系统源码<a class="headerlink" href="#real-world-analysislinux" title="Permanent link">&para;</a></h2>
+<h3 id="51-open">5.1 open() 的完整调用链<a class="headerlink" href="#51-open" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1">// fs/open.c（简化）</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kt">long</span><span class="w"> </span><span class="nf">do_sys_open</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">dfd</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">__user</span><span class="w"> </span><span class="o">*</span><span class="n">filename</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">flags</span><span class="p">,</span><span class="w"> </span><span class="n">umode_t</span><span class="w"> </span><span class="n">mode</span><span class="p">)</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="p">{</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">filename</span><span class="w"> </span><span class="o">*</span><span class="n">tmp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getname</span><span class="p">(</span><span class="n">filename</span><span class="p">);</span><span class="w">  </span><span class="c1">// 从用户空间拷贝文件名</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">get_unused_fd_flags</span><span class="p">(</span><span class="n">flags</span><span class="p">);</span><span class="w">       </span><span class="c1">// 分配文件描述符</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">do_filp_open</span><span class="p">(</span><span class="n">dfd</span><span class="p">,</span><span class="w"> </span><span class="n">tmp</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">op</span><span class="p">);</span><span class="w"> </span><span class="c1">// 打开文件</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">IS_ERR</span><span class="p">(</span><span class="n">f</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">        </span><span class="n">fsnotify_open</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">        </span><span class="n">fd_install</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">);</span><span class="w">                     </span><span class="c1">// 把 file 安装到 fd 表</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">fd</span><span class="p">;</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="p">}</span>
+</code></pre></div>
+<p><code>do_filp_open</code> 的路径解析过程：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1">// fs/namei.c（简化）</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="n">do_filp_open</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">dfd</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">filename</span><span class="w"> </span><span class="o">*</span><span class="n">pathname</span><span class="p">,</span><span class="w"> </span><span class="p">...)</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="p">{</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">path</span><span class="w"> </span><span class="n">path</span><span class="p">;</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span><span class="c1">// 路径解析：逐级查找 dentry</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">path_openat</span><span class="p">(</span><span class="n">dfd</span><span class="p">,</span><span class="w"> </span><span class="n">pathname</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">    </span><span class="c1">// path 包含: path.dentry (目标 dentry) + path.mnt (挂载点)</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="w">    </span><span class="c1">// 创建 file 对象</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">alloc_empty_file</span><span class="p">(</span><span class="n">path</span><span class="p">.</span><span class="n">dentry</span><span class="o">-&gt;</span><span class="n">d_inode</span><span class="o">-&gt;</span><span class="n">i_mode</span><span class="p">);</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="w">    </span><span class="n">file</span><span class="o">-&gt;</span><span class="n">f_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">path</span><span class="p">;</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="w">    </span><span class="n">file</span><span class="o">-&gt;</span><span class="n">f_op</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">path</span><span class="p">.</span><span class="n">dentry</span><span class="o">-&gt;</span><span class="n">d_inode</span><span class="o">-&gt;</span><span class="n">i_fop</span><span class="p">;</span><span class="w">  </span><span class="c1">// 从 inode 获取操作函数表</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="w">    </span><span class="c1">// 调用文件系统的 open 方法</span>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">file</span><span class="o">-&gt;</span><span class="n">f_op</span><span class="o">-&gt;</span><span class="n">open</span><span class="p">)</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="w">        </span><span class="n">file</span><span class="o">-&gt;</span><span class="n">f_op</span><span class="o">-&gt;</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">.</span><span class="n">dentry</span><span class="o">-&gt;</span><span class="n">d_inode</span><span class="p">,</span><span class="w"> </span><span class="n">file</span><span class="p">);</span>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">file</span><span class="p">;</span>
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="52-read">5.2 read() 的完整调用链<a class="headerlink" href="#52-read" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">// fs/read_write.c（简化）</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="kt">ssize_t</span><span class="w"> </span><span class="nf">vfs_read</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="n">file</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">__user</span><span class="w"> </span><span class="o">*</span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="n">loff_t</span><span class="w"> </span><span class="o">*</span><span class="n">pos</span><span class="p">)</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="p">{</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">file</span><span class="o">-&gt;</span><span class="n">f_op</span><span class="o">-&gt;</span><span class="n">read</span><span class="p">)</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">file</span><span class="o">-&gt;</span><span class="n">f_op</span><span class="o">-&gt;</span><span class="n">read</span><span class="p">(</span><span class="n">file</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="n">pos</span><span class="p">);</span><span class="w">  </span><span class="c1">// FS 自定义 read</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span><span class="k">else</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">generic_file_read</span><span class="p">(</span><span class="n">file</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="n">pos</span><span class="p">);</span><span class="w">  </span><span class="c1">// VFS 通用 read</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="p">}</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="c1">// mm/filemap.c（简化）</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="kt">ssize_t</span><span class="w"> </span><span class="nf">generic_file_read</span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="o">*</span><span class="n">file</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">__user</span><span class="w"> </span><span class="o">*</span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="n">loff_t</span><span class="w"> </span><span class="o">*</span><span class="n">pos</span><span class="p">)</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="p">{</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">address_space</span><span class="w"> </span><span class="o">*</span><span class="n">mapping</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">file</span><span class="o">-&gt;</span><span class="n">f_mapping</span><span class="p">;</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="w">    </span><span class="c1">// 1. 查页缓存</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">page</span><span class="w"> </span><span class="o">*</span><span class="n">page</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pagecache_get_page</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span><span class="w"> </span><span class="n">index</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">page</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="w">        </span><span class="c1">// 2. 缓存命中：直接从页缓存拷贝到用户缓冲区</span>
+<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="w">        </span><span class="n">copy_page_to_iter</span><span class="p">(</span><span class="n">page</span><span class="p">,</span><span class="w"> </span><span class="n">offset</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">iter</span><span class="p">);</span>
+<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a><span class="w">        </span><span class="c1">// 3. 缓存未命中：从磁盘读取到页缓存</span>
+<a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a><span class="w">        </span><span class="n">page</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">page_cache_sync_readahead</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
+<a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a><span class="w">        </span><span class="n">copy_page_to_iter</span><span class="p">(</span><span class="n">page</span><span class="p">,</span><span class="w"> </span><span class="n">offset</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">iter</span><span class="p">);</span>
+<a id="__codelineno-15-25" name="__codelineno-15-25" href="#__codelineno-15-25"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-15-26" name="__codelineno-15-26" href="#__codelineno-15-26"></a>
+<a id="__codelineno-15-27" name="__codelineno-15-27" href="#__codelineno-15-27"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">count</span><span class="p">;</span>
+<a id="__codelineno-15-28" name="__codelineno-15-28" href="#__codelineno-15-28"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="53-dentry-dcache">5.3 dentry 缓存（DCache）<a class="headerlink" href="#53-dentry-dcache" title="Permanent link">&para;</a></h3>
+<p>路径解析是昂贵的——每次 <code>open("/home/user/file")</code> 都要逐级查找。dentry 缓存保存最近解析的路径分量：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1">// fs/dcache.c</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">qstr</span><span class="w"> </span><span class="n">d_name</span><span class="p">;</span><span class="w">             </span><span class="c1">// 名称</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">inode</span><span class="w"> </span><span class="o">*</span><span class="n">d_inode</span><span class="p">;</span><span class="w">          </span><span class="c1">// inode</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">dentry</span><span class="w"> </span><span class="o">*</span><span class="n">d_parent</span><span class="p">;</span><span class="w">        </span><span class="c1">// 父 dentry</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">list_head</span><span class="w"> </span><span class="n">d_subdirs</span><span class="p">;</span><span class="w">     </span><span class="c1">// 子目录</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">d_flags</span><span class="p">;</span><span class="w">           </span><span class="c1">// DCACHE_*</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">    </span><span class="n">spinlock_t</span><span class="w"> </span><span class="n">d_lock</span><span class="p">;</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="p">};</span>
+</code></pre></div>
+<p>DCache 的设计：
+- <strong>哈希表</strong>：快速查找 <code>(parent, name) → dentry</code>
+- <strong>LRU</strong>：长期不用的 dentry 被回收
+- <strong>负 dentry</strong>：缓存"不存在的路径"——避免重复查找失败的路径</p>
+<p><strong>设计哲学：缓存路径解析结果——路径解析是 O(路径深度) 的操作，缓存后变成 O(1)。</strong></p>
+<hr />
+<h2 id="hands-on-lablab05-vfs">六、Hands-on Lab：lab05-vfs<a class="headerlink" href="#hands-on-lablab05-vfs" title="Permanent link">&para;</a></h2>
+<h3 id="1python-vfs">实验1：Python 模拟 VFS 层次结构<a class="headerlink" href="#1python-vfs" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># src/simulators/vfs_sim.py</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">Inode</span><span class="p">:</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>    <span class="n">ino</span><span class="p">:</span> <span class="nb">int</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>    <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># 文件类型和权限</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>    <span class="n">size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="n">blocks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>    <span class="n">atime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>    <span class="n">mtime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>    <span class="n">is_dir</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="k">class</span><span class="w"> </span><span class="nc">Dentry</span><span class="p">:</span>
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>    <span class="n">inode</span><span class="p">:</span> <span class="n">Inode</span>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>    <span class="n">parent</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">'Dentry'</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>    <span class="n">children</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s1">'Dentry'</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a>
+<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a><span class="k">class</span><span class="w"> </span><span class="nc">VirtualFileSystem</span><span class="p">:</span>
+<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">inodes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Inode</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">next_ino</span> <span class="o">=</span> <span class="mi">1</span>
+<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_dir</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+<a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a>
+<a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_create_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a>        <span class="n">inode</span> <span class="o">=</span> <span class="n">Inode</span><span class="p">(</span><span class="n">ino</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">next_ino</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="mo">0o755</span><span class="p">,</span> <span class="n">is_dir</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-17-30" name="__codelineno-17-30" href="#__codelineno-17-30"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">inodes</span><span class="p">[</span><span class="n">inode</span><span class="o">.</span><span class="n">ino</span><span class="p">]</span> <span class="o">=</span> <span class="n">inode</span>
+<a id="__codelineno-17-31" name="__codelineno-17-31" href="#__codelineno-17-31"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">next_ino</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-17-32" name="__codelineno-17-32" href="#__codelineno-17-32"></a>        <span class="n">dentry</span> <span class="o">=</span> <span class="n">Dentry</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">inode</span><span class="o">=</span><span class="n">inode</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="p">)</span>
+<a id="__codelineno-17-33" name="__codelineno-17-33" href="#__codelineno-17-33"></a>        <span class="k">if</span> <span class="n">parent</span><span class="p">:</span>
+<a id="__codelineno-17-34" name="__codelineno-17-34" href="#__codelineno-17-34"></a>            <span class="n">parent</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">dentry</span>
+<a id="__codelineno-17-35" name="__codelineno-17-35" href="#__codelineno-17-35"></a>        <span class="k">return</span> <span class="n">dentry</span>
+<a id="__codelineno-17-36" name="__codelineno-17-36" href="#__codelineno-17-36"></a>
+<a id="__codelineno-17-37" name="__codelineno-17-37" href="#__codelineno-17-37"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_create_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+<a id="__codelineno-17-38" name="__codelineno-17-38" href="#__codelineno-17-38"></a>        <span class="n">inode</span> <span class="o">=</span> <span class="n">Inode</span><span class="p">(</span><span class="n">ino</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">next_ino</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="mo">0o644</span><span class="p">)</span>
+<a id="__codelineno-17-39" name="__codelineno-17-39" href="#__codelineno-17-39"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">inodes</span><span class="p">[</span><span class="n">inode</span><span class="o">.</span><span class="n">ino</span><span class="p">]</span> <span class="o">=</span> <span class="n">inode</span>
+<a id="__codelineno-17-40" name="__codelineno-17-40" href="#__codelineno-17-40"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">next_ino</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-17-41" name="__codelineno-17-41" href="#__codelineno-17-41"></a>        <span class="n">dentry</span> <span class="o">=</span> <span class="n">Dentry</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">inode</span><span class="o">=</span><span class="n">inode</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="p">)</span>
+<a id="__codelineno-17-42" name="__codelineno-17-42" href="#__codelineno-17-42"></a>        <span class="n">parent</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">dentry</span>
+<a id="__codelineno-17-43" name="__codelineno-17-43" href="#__codelineno-17-43"></a>        <span class="k">return</span> <span class="n">dentry</span>
+<a id="__codelineno-17-44" name="__codelineno-17-44" href="#__codelineno-17-44"></a>
+<a id="__codelineno-17-45" name="__codelineno-17-45" href="#__codelineno-17-45"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<a id="__codelineno-17-46" name="__codelineno-17-46" href="#__codelineno-17-46"></a><span class="w">        </span><span class="sd">"""路径解析：逐级查找 dentry"""</span>
+<a id="__codelineno-17-47" name="__codelineno-17-47" href="#__codelineno-17-47"></a>        <span class="k">if</span> <span class="n">path</span> <span class="o">==</span> <span class="s2">"/"</span><span class="p">:</span>
+<a id="__codelineno-17-48" name="__codelineno-17-48" href="#__codelineno-17-48"></a>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span>
+<a id="__codelineno-17-49" name="__codelineno-17-49" href="#__codelineno-17-49"></a>
+<a id="__codelineno-17-50" name="__codelineno-17-50" href="#__codelineno-17-50"></a>        <span class="n">parts</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+<a id="__codelineno-17-51" name="__codelineno-17-51" href="#__codelineno-17-51"></a>        <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span>
+<a id="__codelineno-17-52" name="__codelineno-17-52" href="#__codelineno-17-52"></a>
+<a id="__codelineno-17-53" name="__codelineno-17-53" href="#__codelineno-17-53"></a>        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+<a id="__codelineno-17-54" name="__codelineno-17-54" href="#__codelineno-17-54"></a>            <span class="k">if</span> <span class="n">part</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+<a id="__codelineno-17-55" name="__codelineno-17-55" href="#__codelineno-17-55"></a>                <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-17-56" name="__codelineno-17-56" href="#__codelineno-17-56"></a>            <span class="n">current</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">part</span><span class="p">]</span>
+<a id="__codelineno-17-57" name="__codelineno-17-57" href="#__codelineno-17-57"></a>
+<a id="__codelineno-17-58" name="__codelineno-17-58" href="#__codelineno-17-58"></a>        <span class="k">return</span> <span class="n">current</span>
+<a id="__codelineno-17-59" name="__codelineno-17-59" href="#__codelineno-17-59"></a>
+<a id="__codelineno-17-60" name="__codelineno-17-60" href="#__codelineno-17-60"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">mkdir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<a id="__codelineno-17-61" name="__codelineno-17-61" href="#__codelineno-17-61"></a>        <span class="n">parent_path</span> <span class="o">=</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<a id="__codelineno-17-62" name="__codelineno-17-62" href="#__codelineno-17-62"></a>        <span class="n">name</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<a id="__codelineno-17-63" name="__codelineno-17-63" href="#__codelineno-17-63"></a>
+<a id="__codelineno-17-64" name="__codelineno-17-64" href="#__codelineno-17-64"></a>        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_path</span><span class="p">(</span><span class="n">parent_path</span> <span class="ow">or</span> <span class="s2">"/"</span><span class="p">)</span>
+<a id="__codelineno-17-65" name="__codelineno-17-65" href="#__codelineno-17-65"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">parent</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">parent</span><span class="o">.</span><span class="n">inode</span><span class="o">.</span><span class="n">is_dir</span><span class="p">:</span>
+<a id="__codelineno-17-66" name="__codelineno-17-66" href="#__codelineno-17-66"></a>            <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-17-67" name="__codelineno-17-67" href="#__codelineno-17-67"></a>        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">parent</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+<a id="__codelineno-17-68" name="__codelineno-17-68" href="#__codelineno-17-68"></a>            <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-17-69" name="__codelineno-17-69" href="#__codelineno-17-69"></a>
+<a id="__codelineno-17-70" name="__codelineno-17-70" href="#__codelineno-17-70"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_create_dir</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+<a id="__codelineno-17-71" name="__codelineno-17-71" href="#__codelineno-17-71"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-17-72" name="__codelineno-17-72" href="#__codelineno-17-72"></a>
+<a id="__codelineno-17-73" name="__codelineno-17-73" href="#__codelineno-17-73"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<a id="__codelineno-17-74" name="__codelineno-17-74" href="#__codelineno-17-74"></a>        <span class="n">parent_path</span> <span class="o">=</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<a id="__codelineno-17-75" name="__codelineno-17-75" href="#__codelineno-17-75"></a>        <span class="n">name</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<a id="__codelineno-17-76" name="__codelineno-17-76" href="#__codelineno-17-76"></a>
+<a id="__codelineno-17-77" name="__codelineno-17-77" href="#__codelineno-17-77"></a>        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_path</span><span class="p">(</span><span class="n">parent_path</span> <span class="ow">or</span> <span class="s2">"/"</span><span class="p">)</span>
+<a id="__codelineno-17-78" name="__codelineno-17-78" href="#__codelineno-17-78"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">parent</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">parent</span><span class="o">.</span><span class="n">inode</span><span class="o">.</span><span class="n">is_dir</span><span class="p">:</span>
+<a id="__codelineno-17-79" name="__codelineno-17-79" href="#__codelineno-17-79"></a>            <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-17-80" name="__codelineno-17-80" href="#__codelineno-17-80"></a>        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">parent</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+<a id="__codelineno-17-81" name="__codelineno-17-81" href="#__codelineno-17-81"></a>            <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-17-82" name="__codelineno-17-82" href="#__codelineno-17-82"></a>
+<a id="__codelineno-17-83" name="__codelineno-17-83" href="#__codelineno-17-83"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_create_file</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+<a id="__codelineno-17-84" name="__codelineno-17-84" href="#__codelineno-17-84"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-17-85" name="__codelineno-17-85" href="#__codelineno-17-85"></a>
+<a id="__codelineno-17-86" name="__codelineno-17-86" href="#__codelineno-17-86"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">ls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<a id="__codelineno-17-87" name="__codelineno-17-87" href="#__codelineno-17-87"></a>        <span class="n">dentry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<a id="__codelineno-17-88" name="__codelineno-17-88" href="#__codelineno-17-88"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">dentry</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">dentry</span><span class="o">.</span><span class="n">inode</span><span class="o">.</span><span class="n">is_dir</span><span class="p">:</span>
+<a id="__codelineno-17-89" name="__codelineno-17-89" href="#__codelineno-17-89"></a>            <span class="k">return</span> <span class="p">[]</span>
+<a id="__codelineno-17-90" name="__codelineno-17-90" href="#__codelineno-17-90"></a>        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">dentry</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<a id="__codelineno-17-91" name="__codelineno-17-91" href="#__codelineno-17-91"></a>
+<a id="__codelineno-17-92" name="__codelineno-17-92" href="#__codelineno-17-92"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">stat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<a id="__codelineno-17-93" name="__codelineno-17-93" href="#__codelineno-17-93"></a>        <span class="n">dentry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<a id="__codelineno-17-94" name="__codelineno-17-94" href="#__codelineno-17-94"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">dentry</span><span class="p">:</span>
+<a id="__codelineno-17-95" name="__codelineno-17-95" href="#__codelineno-17-95"></a>            <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-17-96" name="__codelineno-17-96" href="#__codelineno-17-96"></a>        <span class="k">return</span> <span class="p">{</span>
+<a id="__codelineno-17-97" name="__codelineno-17-97" href="#__codelineno-17-97"></a>            <span class="s2">"ino"</span><span class="p">:</span> <span class="n">dentry</span><span class="o">.</span><span class="n">inode</span><span class="o">.</span><span class="n">ino</span><span class="p">,</span>
+<a id="__codelineno-17-98" name="__codelineno-17-98" href="#__codelineno-17-98"></a>            <span class="s2">"size"</span><span class="p">:</span> <span class="n">dentry</span><span class="o">.</span><span class="n">inode</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+<a id="__codelineno-17-99" name="__codelineno-17-99" href="#__codelineno-17-99"></a>            <span class="s2">"is_dir"</span><span class="p">:</span> <span class="n">dentry</span><span class="o">.</span><span class="n">inode</span><span class="o">.</span><span class="n">is_dir</span><span class="p">,</span>
+<a id="__codelineno-17-100" name="__codelineno-17-100" href="#__codelineno-17-100"></a>            <span class="s2">"mode"</span><span class="p">:</span> <span class="nb">oct</span><span class="p">(</span><span class="n">dentry</span><span class="o">.</span><span class="n">inode</span><span class="o">.</span><span class="n">mode</span><span class="p">),</span>
+<a id="__codelineno-17-101" name="__codelineno-17-101" href="#__codelineno-17-101"></a>        <span class="p">}</span>
+<a id="__codelineno-17-102" name="__codelineno-17-102" href="#__codelineno-17-102"></a>
+<a id="__codelineno-17-103" name="__codelineno-17-103" href="#__codelineno-17-103"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+<a id="__codelineno-17-104" name="__codelineno-17-104" href="#__codelineno-17-104"></a>    <span class="n">vfs</span> <span class="o">=</span> <span class="n">VirtualFileSystem</span><span class="p">()</span>
+<a id="__codelineno-17-105" name="__codelineno-17-105" href="#__codelineno-17-105"></a>
+<a id="__codelineno-17-106" name="__codelineno-17-106" href="#__codelineno-17-106"></a>    <span class="n">vfs</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="s2">"/home"</span><span class="p">)</span>
+<a id="__codelineno-17-107" name="__codelineno-17-107" href="#__codelineno-17-107"></a>    <span class="n">vfs</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="s2">"/home/user"</span><span class="p">)</span>
+<a id="__codelineno-17-108" name="__codelineno-17-108" href="#__codelineno-17-108"></a>    <span class="n">vfs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s2">"/home/user/file.txt"</span><span class="p">)</span>
+<a id="__codelineno-17-109" name="__codelineno-17-109" href="#__codelineno-17-109"></a>    <span class="n">vfs</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="s2">"/home/user/docs"</span><span class="p">)</span>
+<a id="__codelineno-17-110" name="__codelineno-17-110" href="#__codelineno-17-110"></a>    <span class="n">vfs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s2">"/home/user/docs/note.md"</span><span class="p">)</span>
+<a id="__codelineno-17-111" name="__codelineno-17-111" href="#__codelineno-17-111"></a>
+<a id="__codelineno-17-112" name="__codelineno-17-112" href="#__codelineno-17-112"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"ls /:"</span><span class="p">,</span> <span class="n">vfs</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">"/"</span><span class="p">))</span>
+<a id="__codelineno-17-113" name="__codelineno-17-113" href="#__codelineno-17-113"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"ls /home/user:"</span><span class="p">,</span> <span class="n">vfs</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">"/home/user"</span><span class="p">))</span>
+<a id="__codelineno-17-114" name="__codelineno-17-114" href="#__codelineno-17-114"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"stat /home/user/file.txt:"</span><span class="p">,</span> <span class="n">vfs</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="s2">"/home/user/file.txt"</span><span class="p">))</span>
+<a id="__codelineno-17-115" name="__codelineno-17-115" href="#__codelineno-17-115"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"stat /nonexistent:"</span><span class="p">,</span> <span class="n">vfs</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="s2">"/nonexistent"</span><span class="p">))</span>
+</code></pre></div>
+<h3 id="2c-inode">实验2：C 实现简单 inode 文件系统<a class="headerlink" href="#2c-inode" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1">// src/mini-kernel/mini_fs.c</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;string.h&gt;</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdlib.h&gt;</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="cp">#define MAX_INODES 1024</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="cp">#define MAX_BLOCKS 4096</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="cp">#define BLOCK_SIZE 4096</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="cp">#define MAX_NAME 32</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="cp">#define MAX_DENTRIES 128</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="k">typedef</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">T_FILE</span><span class="p">,</span><span class="w"> </span><span class="n">T_DIR</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="n">FileType</span><span class="p">;</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ino</span><span class="p">;</span>
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a><span class="w">    </span><span class="n">FileType</span><span class="w"> </span><span class="n">type</span><span class="p">;</span>
+<a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">size</span><span class="p">;</span>
+<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">blocks</span><span class="p">[</span><span class="mi">12</span><span class="p">];</span><span class="w">           </span><span class="c1">// 直接块（简化版）</span>
+<a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">block_count</span><span class="p">;</span>
+<a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">link_count</span><span class="p">;</span><span class="w">           </span><span class="c1">// 硬链接计数</span>
+<a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a><span class="p">}</span><span class="w"> </span><span class="n">Inode</span><span class="p">;</span>
+<a id="__codelineno-18-22" name="__codelineno-18-22" href="#__codelineno-18-22"></a>
+<a id="__codelineno-18-23" name="__codelineno-18-23" href="#__codelineno-18-23"></a><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-24" name="__codelineno-18-24" href="#__codelineno-18-24"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">name</span><span class="p">[</span><span class="n">MAX_NAME</span><span class="p">];</span>
+<a id="__codelineno-18-25" name="__codelineno-18-25" href="#__codelineno-18-25"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ino</span><span class="p">;</span>
+<a id="__codelineno-18-26" name="__codelineno-18-26" href="#__codelineno-18-26"></a><span class="p">}</span><span class="w"> </span><span class="n">DirEntry</span><span class="p">;</span>
+<a id="__codelineno-18-27" name="__codelineno-18-27" href="#__codelineno-18-27"></a>
+<a id="__codelineno-18-28" name="__codelineno-18-28" href="#__codelineno-18-28"></a><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-29" name="__codelineno-18-29" href="#__codelineno-18-29"></a><span class="w">    </span><span class="n">Inode</span><span class="w"> </span><span class="n">inodes</span><span class="p">[</span><span class="n">MAX_INODES</span><span class="p">];</span>
+<a id="__codelineno-18-30" name="__codelineno-18-30" href="#__codelineno-18-30"></a><span class="w">    </span><span class="n">DirEntry</span><span class="w"> </span><span class="n">dir_entries</span><span class="p">[</span><span class="n">MAX_INODES</span><span class="p">][</span><span class="n">MAX_DENTRIES</span><span class="p">];</span>
+<a id="__codelineno-18-31" name="__codelineno-18-31" href="#__codelineno-18-31"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">dir_entry_count</span><span class="p">[</span><span class="n">MAX_INODES</span><span class="p">];</span>
+<a id="__codelineno-18-32" name="__codelineno-18-32" href="#__codelineno-18-32"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">blocks</span><span class="p">[</span><span class="n">MAX_BLOCKS</span><span class="p">][</span><span class="n">BLOCK_SIZE</span><span class="p">];</span>
+<a id="__codelineno-18-33" name="__codelineno-18-33" href="#__codelineno-18-33"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">next_ino</span><span class="p">;</span>
+<a id="__codelineno-18-34" name="__codelineno-18-34" href="#__codelineno-18-34"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">next_block</span><span class="p">;</span>
+<a id="__codelineno-18-35" name="__codelineno-18-35" href="#__codelineno-18-35"></a><span class="p">}</span><span class="w"> </span><span class="n">FileSystem</span><span class="p">;</span>
+<a id="__codelineno-18-36" name="__codelineno-18-36" href="#__codelineno-18-36"></a>
+<a id="__codelineno-18-37" name="__codelineno-18-37" href="#__codelineno-18-37"></a><span class="kt">void</span><span class="w"> </span><span class="nf">fs_init</span><span class="p">(</span><span class="n">FileSystem</span><span class="w"> </span><span class="o">*</span><span class="n">fs</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-38" name="__codelineno-18-38" href="#__codelineno-18-38"></a><span class="w">    </span><span class="n">memset</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">fs</span><span class="p">));</span>
+<a id="__codelineno-18-39" name="__codelineno-18-39" href="#__codelineno-18-39"></a><span class="w">    </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">next_ino</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-18-40" name="__codelineno-18-40" href="#__codelineno-18-40"></a><span class="w">    </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">next_block</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-18-41" name="__codelineno-18-41" href="#__codelineno-18-41"></a>
+<a id="__codelineno-18-42" name="__codelineno-18-42" href="#__codelineno-18-42"></a><span class="w">    </span><span class="c1">// 创建根目录 (inode 0)</span>
+<a id="__codelineno-18-43" name="__codelineno-18-43" href="#__codelineno-18-43"></a><span class="w">    </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">inodes</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">ino</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-18-44" name="__codelineno-18-44" href="#__codelineno-18-44"></a><span class="w">    </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">inodes</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">T_DIR</span><span class="p">;</span>
+<a id="__codelineno-18-45" name="__codelineno-18-45" href="#__codelineno-18-45"></a><span class="w">    </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">inodes</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">link_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-18-46" name="__codelineno-18-46" href="#__codelineno-18-46"></a><span class="p">}</span>
+<a id="__codelineno-18-47" name="__codelineno-18-47" href="#__codelineno-18-47"></a>
+<a id="__codelineno-18-48" name="__codelineno-18-48" href="#__codelineno-18-48"></a><span class="kt">int</span><span class="w"> </span><span class="nf">fs_create</span><span class="p">(</span><span class="n">FileSystem</span><span class="w"> </span><span class="o">*</span><span class="n">fs</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">parent_ino</span><span class="p">,</span><span class="w"> </span><span class="n">FileType</span><span class="w"> </span><span class="n">type</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-49" name="__codelineno-18-49" href="#__codelineno-18-49"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">dir_entry_count</span><span class="p">[</span><span class="n">parent_ino</span><span class="p">]</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">MAX_DENTRIES</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="mi">-1</span><span class="p">;</span>
+<a id="__codelineno-18-50" name="__codelineno-18-50" href="#__codelineno-18-50"></a>
+<a id="__codelineno-18-51" name="__codelineno-18-51" href="#__codelineno-18-51"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ino</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">next_ino</span><span class="o">++</span><span class="p">;</span>
+<a id="__codelineno-18-52" name="__codelineno-18-52" href="#__codelineno-18-52"></a><span class="w">    </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">inodes</span><span class="p">[</span><span class="n">ino</span><span class="p">].</span><span class="n">ino</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ino</span><span class="p">;</span>
+<a id="__codelineno-18-53" name="__codelineno-18-53" href="#__codelineno-18-53"></a><span class="w">    </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">inodes</span><span class="p">[</span><span class="n">ino</span><span class="p">].</span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">type</span><span class="p">;</span>
+<a id="__codelineno-18-54" name="__codelineno-18-54" href="#__codelineno-18-54"></a><span class="w">    </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">inodes</span><span class="p">[</span><span class="n">ino</span><span class="p">].</span><span class="n">link_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<a id="__codelineno-18-55" name="__codelineno-18-55" href="#__codelineno-18-55"></a>
+<a id="__codelineno-18-56" name="__codelineno-18-56" href="#__codelineno-18-56"></a><span class="w">    </span><span class="c1">// 在父目录中添加条目</span>
+<a id="__codelineno-18-57" name="__codelineno-18-57" href="#__codelineno-18-57"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">dir_entry_count</span><span class="p">[</span><span class="n">parent_ino</span><span class="p">]</span><span class="o">++</span><span class="p">;</span>
+<a id="__codelineno-18-58" name="__codelineno-18-58" href="#__codelineno-18-58"></a><span class="w">    </span><span class="n">strncpy</span><span class="p">(</span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">dir_entries</span><span class="p">[</span><span class="n">parent_ino</span><span class="p">][</span><span class="n">idx</span><span class="p">].</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">MAX_NAME</span><span class="p">);</span>
+<a id="__codelineno-18-59" name="__codelineno-18-59" href="#__codelineno-18-59"></a><span class="w">    </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">dir_entries</span><span class="p">[</span><span class="n">parent_ino</span><span class="p">][</span><span class="n">idx</span><span class="p">].</span><span class="n">ino</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ino</span><span class="p">;</span>
+<a id="__codelineno-18-60" name="__codelineno-18-60" href="#__codelineno-18-60"></a>
+<a id="__codelineno-18-61" name="__codelineno-18-61" href="#__codelineno-18-61"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">ino</span><span class="p">;</span>
+<a id="__codelineno-18-62" name="__codelineno-18-62" href="#__codelineno-18-62"></a><span class="p">}</span>
+<a id="__codelineno-18-63" name="__codelineno-18-63" href="#__codelineno-18-63"></a>
+<a id="__codelineno-18-64" name="__codelineno-18-64" href="#__codelineno-18-64"></a><span class="kt">void</span><span class="w"> </span><span class="nf">fs_ls</span><span class="p">(</span><span class="n">FileSystem</span><span class="w"> </span><span class="o">*</span><span class="n">fs</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">dir_ino</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-65" name="__codelineno-18-65" href="#__codelineno-18-65"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"Directory (inode %d):</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">dir_ino</span><span class="p">);</span>
+<a id="__codelineno-18-66" name="__codelineno-18-66" href="#__codelineno-18-66"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">dir_entry_count</span><span class="p">[</span><span class="n">dir_ino</span><span class="p">];</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-67" name="__codelineno-18-67" href="#__codelineno-18-67"></a><span class="w">        </span><span class="n">DirEntry</span><span class="w"> </span><span class="o">*</span><span class="n">e</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">dir_entries</span><span class="p">[</span><span class="n">dir_ino</span><span class="p">][</span><span class="n">i</span><span class="p">];</span>
+<a id="__codelineno-18-68" name="__codelineno-18-68" href="#__codelineno-18-68"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">"  %s (inode %d, %s)</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span>
+<a id="__codelineno-18-69" name="__codelineno-18-69" href="#__codelineno-18-69"></a><span class="w">               </span><span class="n">e</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="o">-&gt;</span><span class="n">ino</span><span class="p">,</span>
+<a id="__codelineno-18-70" name="__codelineno-18-70" href="#__codelineno-18-70"></a><span class="w">               </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">inodes</span><span class="p">[</span><span class="n">e</span><span class="o">-&gt;</span><span class="n">ino</span><span class="p">].</span><span class="n">type</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">T_DIR</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">"dir"</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">"file"</span><span class="p">);</span>
+<a id="__codelineno-18-71" name="__codelineno-18-71" href="#__codelineno-18-71"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-18-72" name="__codelineno-18-72" href="#__codelineno-18-72"></a><span class="p">}</span>
+<a id="__codelineno-18-73" name="__codelineno-18-73" href="#__codelineno-18-73"></a>
+<a id="__codelineno-18-74" name="__codelineno-18-74" href="#__codelineno-18-74"></a><span class="kt">int</span><span class="w"> </span><span class="nf">fs_write</span><span class="p">(</span><span class="n">FileSystem</span><span class="w"> </span><span class="o">*</span><span class="n">fs</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">ino</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">len</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-75" name="__codelineno-18-75" href="#__codelineno-18-75"></a><span class="w">    </span><span class="n">Inode</span><span class="w"> </span><span class="o">*</span><span class="n">inode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">inodes</span><span class="p">[</span><span class="n">ino</span><span class="p">];</span>
+<a id="__codelineno-18-76" name="__codelineno-18-76" href="#__codelineno-18-76"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">inode</span><span class="o">-&gt;</span><span class="n">type</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">T_FILE</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="mi">-1</span><span class="p">;</span>
+<a id="__codelineno-18-77" name="__codelineno-18-77" href="#__codelineno-18-77"></a>
+<a id="__codelineno-18-78" name="__codelineno-18-78" href="#__codelineno-18-78"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">block</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">next_block</span><span class="o">++</span><span class="p">;</span>
+<a id="__codelineno-18-79" name="__codelineno-18-79" href="#__codelineno-18-79"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-18-80" name="__codelineno-18-80" href="#__codelineno-18-80"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">remaining</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">len</span><span class="p">;</span>
+<a id="__codelineno-18-81" name="__codelineno-18-81" href="#__codelineno-18-81"></a>
+<a id="__codelineno-18-82" name="__codelineno-18-82" href="#__codelineno-18-82"></a><span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">remaining</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-83" name="__codelineno-18-83" href="#__codelineno-18-83"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">chunk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">remaining</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">BLOCK_SIZE</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">remaining</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">BLOCK_SIZE</span><span class="p">;</span>
+<a id="__codelineno-18-84" name="__codelineno-18-84" href="#__codelineno-18-84"></a><span class="w">        </span><span class="n">memcpy</span><span class="p">(</span><span class="n">fs</span><span class="o">-&gt;</span><span class="n">blocks</span><span class="p">[</span><span class="n">block</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">offset</span><span class="p">],</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BLOCK_SIZE</span><span class="p">,</span><span class="w"> </span><span class="n">chunk</span><span class="p">);</span>
+<a id="__codelineno-18-85" name="__codelineno-18-85" href="#__codelineno-18-85"></a><span class="w">        </span><span class="n">inode</span><span class="o">-&gt;</span><span class="n">blocks</span><span class="p">[</span><span class="n">inode</span><span class="o">-&gt;</span><span class="n">block_count</span><span class="o">++</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">block</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">offset</span><span class="p">;</span>
+<a id="__codelineno-18-86" name="__codelineno-18-86" href="#__codelineno-18-86"></a><span class="w">        </span><span class="n">remaining</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">chunk</span><span class="p">;</span>
+<a id="__codelineno-18-87" name="__codelineno-18-87" href="#__codelineno-18-87"></a><span class="w">        </span><span class="n">offset</span><span class="o">++</span><span class="p">;</span>
+<a id="__codelineno-18-88" name="__codelineno-18-88" href="#__codelineno-18-88"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-18-89" name="__codelineno-18-89" href="#__codelineno-18-89"></a>
+<a id="__codelineno-18-90" name="__codelineno-18-90" href="#__codelineno-18-90"></a><span class="w">    </span><span class="n">inode</span><span class="o">-&gt;</span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">len</span><span class="p">;</span>
+<a id="__codelineno-18-91" name="__codelineno-18-91" href="#__codelineno-18-91"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">len</span><span class="p">;</span>
+<a id="__codelineno-18-92" name="__codelineno-18-92" href="#__codelineno-18-92"></a><span class="p">}</span>
+<a id="__codelineno-18-93" name="__codelineno-18-93" href="#__codelineno-18-93"></a>
+<a id="__codelineno-18-94" name="__codelineno-18-94" href="#__codelineno-18-94"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-95" name="__codelineno-18-95" href="#__codelineno-18-95"></a><span class="w">    </span><span class="n">FileSystem</span><span class="w"> </span><span class="n">fs</span><span class="p">;</span>
+<a id="__codelineno-18-96" name="__codelineno-18-96" href="#__codelineno-18-96"></a><span class="w">    </span><span class="n">fs_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fs</span><span class="p">);</span>
+<a id="__codelineno-18-97" name="__codelineno-18-97" href="#__codelineno-18-97"></a>
+<a id="__codelineno-18-98" name="__codelineno-18-98" href="#__codelineno-18-98"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">home_ino</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fs_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fs</span><span class="p">,</span><span class="w"> </span><span class="s">"home"</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">T_DIR</span><span class="p">);</span>
+<a id="__codelineno-18-99" name="__codelineno-18-99" href="#__codelineno-18-99"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">user_ino</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fs_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fs</span><span class="p">,</span><span class="w"> </span><span class="s">"user"</span><span class="p">,</span><span class="w"> </span><span class="n">home_ino</span><span class="p">,</span><span class="w"> </span><span class="n">T_DIR</span><span class="p">);</span>
+<a id="__codelineno-18-100" name="__codelineno-18-100" href="#__codelineno-18-100"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">file_ino</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fs_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fs</span><span class="p">,</span><span class="w"> </span><span class="s">"hello.txt"</span><span class="p">,</span><span class="w"> </span><span class="n">user_ino</span><span class="p">,</span><span class="w"> </span><span class="n">T_FILE</span><span class="p">);</span>
+<a id="__codelineno-18-101" name="__codelineno-18-101" href="#__codelineno-18-101"></a>
+<a id="__codelineno-18-102" name="__codelineno-18-102" href="#__codelineno-18-102"></a><span class="w">    </span><span class="n">fs_write</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fs</span><span class="p">,</span><span class="w"> </span><span class="n">file_ino</span><span class="p">,</span><span class="w"> </span><span class="s">"Hello, World!"</span><span class="p">,</span><span class="w"> </span><span class="mi">13</span><span class="p">);</span>
+<a id="__codelineno-18-103" name="__codelineno-18-103" href="#__codelineno-18-103"></a>
+<a id="__codelineno-18-104" name="__codelineno-18-104" href="#__codelineno-18-104"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"=== Root ===</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<a id="__codelineno-18-105" name="__codelineno-18-105" href="#__codelineno-18-105"></a><span class="w">    </span><span class="n">fs_ls</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fs</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<a id="__codelineno-18-106" name="__codelineno-18-106" href="#__codelineno-18-106"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">=== /home ===</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<a id="__codelineno-18-107" name="__codelineno-18-107" href="#__codelineno-18-107"></a><span class="w">    </span><span class="n">fs_ls</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fs</span><span class="p">,</span><span class="w"> </span><span class="n">home_ino</span><span class="p">);</span>
+<a id="__codelineno-18-108" name="__codelineno-18-108" href="#__codelineno-18-108"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">=== /home/user ===</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<a id="__codelineno-18-109" name="__codelineno-18-109" href="#__codelineno-18-109"></a><span class="w">    </span><span class="n">fs_ls</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fs</span><span class="p">,</span><span class="w"> </span><span class="n">user_ino</span><span class="p">);</span>
+<a id="__codelineno-18-110" name="__codelineno-18-110" href="#__codelineno-18-110"></a>
+<a id="__codelineno-18-111" name="__codelineno-18-111" href="#__codelineno-18-111"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">File content (inode %d, size %d):</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">file_ino</span><span class="p">,</span><span class="w"> </span><span class="n">fs</span><span class="p">.</span><span class="n">inodes</span><span class="p">[</span><span class="n">file_ino</span><span class="p">].</span><span class="n">size</span><span class="p">);</span>
+<a id="__codelineno-18-112" name="__codelineno-18-112" href="#__codelineno-18-112"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"  %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">fs</span><span class="p">.</span><span class="n">blocks</span><span class="p">[</span><span class="n">fs</span><span class="p">.</span><span class="n">inodes</span><span class="p">[</span><span class="n">file_ino</span><span class="p">].</span><span class="n">blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">]]);</span>
+<a id="__codelineno-18-113" name="__codelineno-18-113" href="#__codelineno-18-113"></a>
+<a id="__codelineno-18-114" name="__codelineno-18-114" href="#__codelineno-18-114"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-18-115" name="__codelineno-18-115" href="#__codelineno-18-115"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="_1">进阶实验<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>实现硬链接（多个 dentry 指向同一 inode）</li>
+<li>实现简单的日志（写操作先记录日志再执行）</li>
+<li>实现页缓存模拟（缓存文件数据页，统计命中率）</li>
+<li>实现路径解析的 dentry 缓存</li>
+</ul>
+<hr />
+<h2 id="_2">参考资源<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Linux 源码 <code>fs/</code> — VFS 和各文件系统实现</li>
+<li>Linux 源码 <code>include/linux/fs.h</code> — VFS 核心数据结构</li>
+<li>Linux 源码 <code>fs/ext4/</code> — ext4 实现</li>
+<li><em>Understanding the Linux Kernel</em> Ch.12 — 文件系统</li>
+<li><em>Linux Kernel Development</em> Ch.13 — VFS</li>
+<li>ext4 文档：https://ext4.wiki.kernel.org/</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
